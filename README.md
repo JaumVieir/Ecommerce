@@ -2,6 +2,8 @@
 
 ### Backend
 
+### PRODUTOS
+
 #### GET-> http:localhost:3000/produtos/predicaoByClique/{idUser}
 #### Entrada:
     {
@@ -59,3 +61,35 @@
 #### Esse EndPoint retorna um Array com 10 produtos iguais, gerados a partir das predições.
 #### Usar para gerar os grids de precvisão, conforme mostrado lá encima!
 
+#### POST-> http:localhost:3000/usuarios/setClique
+#### Entrada:
+    {
+      "usuario":"01",
+      "clique":[{
+          "product_id":"B07ZJTX8X1",
+          "product_name":"Kalciferum: Demônios, Bruxas e Vagantes",
+          "data":"2025-09-28"
+          }]
+    }
+#### Saida:
+    {
+      "Mensagem": "Sucesso!"
+    }
+#### Usar esse EndPoint para armazenar a atividade no BD.
+#### Utilizar no click do botão de seleção do produto, passando o product_id, o nome e data do clique.
+
+### USUÁRIO
+
+#### POST-> http:localhost:3000/usuarios
+#### Entrada:
+    {
+      "id":"01",
+      "cliquesProduto: []
+    }
+#### Saida:
+    {
+      "Mensagem": "Sucesso!"
+    }
+#### Como o Mongo só está sendo usado para captar a atividade, ou seja, os cliques, sendo produtos, compra e usuarios registrados no SQL, essa função
+#### será utilizada apenas, para "trazer" o ID do usuário no SQL para o Mongo, afim de criar um chaveamento unico geral. Isso deve ocorrer no momento 
+#### de cadastramento do usuário, para evitar erros e bugs.
