@@ -9,7 +9,6 @@ const categoriaSelecionada = ref("");
 export default {
   data() {
     return {
-      produtosOriginais: [],
       produtos: [],
       paginaAtual: 1,
       produtosPorPagina: 20,
@@ -46,11 +45,8 @@ export default {
       case "3":
         this.produtos.sort((a, b) => b.rating_count - a.rating_count);
         break;
-      case "4":
-        this.produtos = [...this.produtosOriginais];
-        break;
       default:
-        this.produtos = [...this.produtosOriginais];
+        this.getProdutos();
         break;
       }
 
@@ -78,7 +74,6 @@ export default {
       try {
         const response = await axios.get("http://localhost:3000/produtos");
         this.produtos = response.data[0];
-        this.produtosOriginais = response.data[0];
       } catch (error) {
         console.error(error);
         alert("Erro ao carregar produtos. Tente novamente.");
@@ -88,6 +83,14 @@ export default {
       // Navega para a página de detalhes com o id
       this.$router.push({ path: `/produto/${id}` });
     },
+    formataPreco(valor) {
+      if (!valor) return 'R$ 0,00';
+      const numero = typeof valor === 'string' ? parseFloat(valor.replace(",", ".")) : valor;
+      return numero.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+      });
+}
   },
 };
 </script>
@@ -174,7 +177,6 @@ export default {
                 <option value="1">Mais Barato</option>
                 <option value="2">Mais Caro</option>
                 <option value="3">Mais Popular</option>
-                <option value="4">Normal</option>
               </select>
             </div>
           </div>
@@ -185,11 +187,12 @@ export default {
               :key="produto.id"
               class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
             >
-              <div class="relative">
+              <div class="relative relative w-full h-32 bg-white flex items-center justify-center overflow-hidden mt-5">
                 <img
+                
                   :src="produto.img_link"
                   alt="SAMSUNG Smart TV Crystal 50"
-                  class="w-full h-64 object-cover"
+                  class=" object-contain h-full max-w-full"
                   keywords="SAMSUNG Smart TV Crystal 50, TV, electronics, ecommerce"
                 />
                 <div class="absolute top-3 right-3 flex flex-col gap-2">
@@ -242,7 +245,7 @@ export default {
                 </h3>
                 <div class="flex items-center justify-between">
                   <div>
-                    <span class="font-bold">{{ produto.actual_price }}</span>
+                    <span class="font-bold">{{ formataPreco(produto.actual_price) }}</span>
                   </div>
                   <button
                     class="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition duration-300"
