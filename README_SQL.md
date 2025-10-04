@@ -6,6 +6,10 @@
     </strong>
 </p>
 
+#### ESQUEMA DO BD:
+
+<img src="imgGit/EsquemaBD.png" alt="Gráfico" width="500">
+
 ---
 
 ### Backend - SQL
@@ -118,4 +122,5 @@
   
   
 #### - Esse EndPoint retorna um vetor de objetos, com 4 atributos como id da venda, dataVenda, valorTotal e produtos(Que é um vetor que contém todos os produtos da venda). 
+
 
