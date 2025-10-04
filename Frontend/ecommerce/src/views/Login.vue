@@ -45,6 +45,7 @@
 </template>
 
 <script>
+import axios from 'axios';
 export default {
   data() {
     return {
@@ -55,8 +56,19 @@ export default {
   methods: {
     handleLogin() {
       // Aqui você pode integrar com API ou Firebase
-      console.log('Login:', this.email, this.password);
-      alert('Login realizado com sucesso!');
+      try {
+          axios.post('http://localhost:3000/usuariosecommerce/login', {
+          email: this.email,
+          senha: this.password
+        }).then(response => {
+          console.log('Login bem-sucedido:', response.data)
+        alert('Login realizado com sucesso!');
+        this.$router.push('/TodosProdutos');
+      });
+      } catch (error) {
+        console.error('Erro no login:', error);
+        alert('Falha no login. Verifique suas credenciais.');
+      } 
     }
   }
 }

@@ -57,10 +57,12 @@
 </template>
 
 <script>
+import axios from 'axios';
 export default {
   data() {
     return {
       name: '',
+      cpf: '000000000000',
       email: '',
       password: ''
     }
@@ -68,6 +70,26 @@ export default {
   methods: {
     handleRegister() {
       // Aqui você pode integrar com API ou Firebase
+      try {
+        axios.post('http://localhost:3000/usuariosecommerce/cadastro', {
+          nome: this.name,
+          cpf: this.cpf,
+          email: this.email,
+          senha: this.password
+        })
+        .then(response => {
+          console.log('Usuário cadastrado:', response.data);
+          alert('Conta criada com sucesso!');
+          this.$router.push('/login');
+        })
+        .catch(error => {
+          console.error('Erro ao cadastrar usuário:', error);
+          alert('Erro ao criar conta. Tente novamente.');
+        });
+      } catch (error) {
+        console.error('Erro na requisição:', error);
+        alert('Erro ao criar conta. Tente novamente.');
+      }
       console.log('Cadastro:', this.name, this.email, this.password);
       alert('Conta criada com sucesso!');
       this.$router.push('/login');
