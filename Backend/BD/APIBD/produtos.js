@@ -106,7 +106,7 @@ router.get("/predicao/:id", async (req, res) => {
     const input = JSON.stringify({ id });
 
     const arquivo = spawn("python", [
-      "/Users/macbook/Projects/Ecommerce/Backend/BD/Recomendacao/Recomendacao.py",
+      "C:/Users/User/Projetos/Ecommerce/Backend/BD/Recomendacao/Recomendacao.py",
     ]);
 
     let respostas = "";

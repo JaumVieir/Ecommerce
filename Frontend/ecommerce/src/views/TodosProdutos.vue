@@ -1,5 +1,5 @@
 <script>
-import { ref, } from "vue";
+import { ref } from "vue";
 import Papa from "papaparse";
 import axios from "axios";
 
@@ -7,32 +7,46 @@ const categorias = ref([]);
 const categoriaSelecionada = ref("");
 
 export default {
+  data() {
+    return {
+      produtos: [],
+      paginaAtual: 1,
+      produtosPorPagina: 20,
+    };
+  },
 
+  computed: {
+    produtosPaginação() {
+      const inicio = (this.paginaAtual - 1) * this.produtosPorPagina;
+      const fim = inicio + this.produtosPorPagina;
+      return this.produtos.slice(inicio, fim);
+    },
+    totalPaginas() {
+      return Math.ceil(this.produtos.length / this.produtosPorPagina);
+    },
+  },
 
-data() {
-  return {
-    produtos: []
-  };
-},
+  mounted() {
+    this.getProdutos();
+  },
 
-mounted(){
-  this.getProdutos();
-},
-
-methods: {
+  methods: {
     async getProdutos() {
       try {
-        const response = await axios.get('http://localhost:3000/produtos');
+        const response = await axios.get("http://localhost:3000/produtos");
         this.produtos = response.data[0];
         console.log(this.produtos);
       } catch (error) {
         console.error(error);
-        alert('Erro ao cadastrar. Tente novamente.');
+        alert("Erro ao carregar produtos. Tente novamente.");
       }
-    }
+    },
+    verDetalhes(id) {
+      // Navega para a página de detalhes com o id
+      this.$router.push({ path: `/produto/${id}` });
+    },
   },
-}
-
+};
 </script>
 
 <template>
@@ -122,12 +136,14 @@ methods: {
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <!-- Primeiro produto -->
-            <div v-for="produto in produtos" :key="produto.id"
+            <div
+              v-for="produto in produtosPaginação"
+              :key="produto.id"
               class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
             >
               <div class="relative">
                 <img
-                  :src=produto.img_link
+                  :src="produto.img_link"
                   alt="SAMSUNG Smart TV Crystal 50"
                   class="w-full h-64 object-cover"
                   keywords="SAMSUNG Smart TV Crystal 50, TV, electronics, ecommerce"
@@ -170,15 +186,20 @@ methods: {
                       star_half
                     </span>
                   </div>
-                  <span class="text-sm text-gray-500 ml-2">{{ produto.rating }}</span>
+                  <span class="text-sm text-gray-500 ml-2">{{
+                    produto.rating
+                  }}</span>
                 </div>
                 <h3
-                  class="font-medium text-lg mb-2 hover:text-primary-600 transition duration-300 text-truncate"
+                  class="font-medium text-lg mb-2 hover:text-primary-600 transition duration-300 text-truncate cursor-pointer"
+                  @click="verDetalhes(produto.id)"
                 >
-                  {{ produto.product_name }} 
-                               </h3>
+                  {{ produto.product_name }}
+                </h3>
                 <div class="flex items-center justify-between">
-                  <div><span class="font-bold">{{ produto.actual_price }}</span></div>
+                  <div>
+                    <span class="font-bold">{{ produto.actual_price }}</span>
+                  </div>
                   <button
                     class="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition duration-300"
                   >
@@ -189,9 +210,28 @@ methods: {
                 </div>
               </div>
             </div>
-            
           </div>
-          <div class="mt-12 flex justify-center"></div>
+          <div class="mt-12 flex justify-center">
+            <div class="flex items-center space-x-2">
+              <button
+                class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                :disabled="paginaAtual === 1"
+                @click="paginaAtual--"
+              >
+                Anterior
+              </button>
+
+              <span>Página {{ paginaAtual }} de {{ totalPaginas }}</span>
+
+              <button
+                class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                :disabled="paginaAtual === totalPaginas"
+                @click="paginaAtual++"
+              >
+                Próxima
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
