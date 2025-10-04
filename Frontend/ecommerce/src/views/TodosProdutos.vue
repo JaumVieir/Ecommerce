@@ -238,7 +238,7 @@ export default {
                   }}</span>
                 </div>
                 <h3
-                  class="font-medium text-lg mb-2 hover:text-primary-600 transition duration-300 text-truncate cursor-pointer"
+                  class="font-medium text-base mb-1 hover:text-primary-600 transition duration-300 text-truncate cursor-pointer"
                   @click="verDetalhes(produto.id)"
                 >
                   {{ produto.product_name }}
