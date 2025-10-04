@@ -20,9 +20,11 @@ router.post("/cadastro", async (req, res) =>{
  
     const cmd= `INSERT INTO usuarios (nome, cpf, email, senha) VALUES (?, ?, ?, ?)`;
 
-    const { rows } = await pool.query(cmd, [nome, cpf, email, senha]);
+    const [cadastra] = await pool.query(cmd, [nome, cpf, email, senha]);
 
-    return res.status(201).json({ msg: "Inserido!" });
+    const [produtosSql] = await pool.query(`SELECT * FROM usuarios WHERE id = (?)`, [cadastra.insertId]);
+
+    return res.status(201).json(produtosSql);
   }catch(e){
     res.status(500).json({error: `Erro ao inserir usuario!`})
   }
