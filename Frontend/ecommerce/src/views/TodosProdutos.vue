@@ -12,6 +12,7 @@ export default {
       produtos: [],
       paginaAtual: 1,
       produtosPorPagina: 20,
+      pesquisar: ''
     };
   },
 
@@ -29,13 +30,29 @@ export default {
   mounted() {
     this.getProdutos();
   },
-
+  watch: {
+  pesquisar(novoValor) {
+    if (novoValor.length >= 2) {
+      this.buscarProdutos(novoValor);
+    } else {
+      this.getProdutos();
+    }
+  }
+},
   methods: {
+    async buscarProdutos(texto) {
+      try {
+        const response = await axios.get(`http://localhost:3000/produtos/getByTexto/${texto}`);
+        this.produtos = response.data;
+      } catch (error) {
+        console.error(error);
+        alert("Erro ao carregar produtos. Tente novamente.");
+      }
+    },
     async getProdutos() {
       try {
         const response = await axios.get("http://localhost:3000/produtos");
         this.produtos = response.data[0];
-        console.log(this.produtos);
       } catch (error) {
         console.error(error);
         alert("Erro ao carregar produtos. Tente novamente.");
@@ -75,6 +92,7 @@ export default {
             <div class="flex items-center space-x-4">
               <div class="relative">
                 <input
+                  v-model="pesquisar"
                   type="text"
                   placeholder="Search products..."
                   class="py-2 pl-10 pr-4 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"

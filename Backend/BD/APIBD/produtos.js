@@ -5,20 +5,16 @@ import { text } from "stream/consumers";
 
 const router = express.Router();
 
+
 router.get("/getByTexto/:texto", async (req, res) => {
   try {
     const { texto } = req.params;
 
-    // Monta o comando com placeholder (seguro)
-    const cmd = `SELECT * FROM produtos WHERE product_name LIKE "%lâmpada%"`;
-    console.log(texto);
-
-    // Passa o parâmetro com % concatenado, fora do SQL
-    const [produtos] = await pool.query(cmd);
-
-    console.log(produtos);
+    const [produtos] = await pool.query(
+      `SELECT * FROM produtos WHERE product_name LIKE '%${texto}%' OR descricao LIKE '%${texto}%'`,
+      [texto, texto]
+    );
     res.json(produtos);
-
   } catch (err) {
     res.status(500).json({ error: "Erro ao buscar produtos" });
   }
@@ -106,7 +102,7 @@ router.get("/predicao/:id", async (req, res) => {
     const input = JSON.stringify({ id });
 
     const arquivo = spawn("python", [
-      "Backend/BD/Recomendacao/Recomendacao.py",
+      "C:/Users/Bitlab/Desktop/Ecommerce/Backend/BD/Recomendacao/Recomendacao.py",
     ]);
 
     let respostas = "";
