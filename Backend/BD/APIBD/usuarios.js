@@ -21,7 +21,7 @@ router.post("/setClique", async (req, res) => {
 
         const cliques = await getDB().collection('Usuarios').updateOne(
           {id},
-          { $push: { "cliqueProduto.0": { $each: clique } } }
+          { $push: { "cliqueProduto.0": { $each: cliques } } }
         );
         res.json({"Mensagem":"Sucesso!"})
     } catch (err) {

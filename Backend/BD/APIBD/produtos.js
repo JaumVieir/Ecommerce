@@ -1,15 +1,17 @@
 import express from 'express';
-import { getDB } from "../APIBD/db.js";
+import { getDB,pool } from "../APIBD/db.js";
 import { spawn } from 'child_process'
 
 const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
-    const produtos = await getDB().collection('ProdutosAmazon').find({}).toArray();
-    res.json(produtos)
+    //const produtos = await getDB().collection('ProdutosAmazon').find({}).toArray();
+    const produtos = await pool.query(`Select * from Produtos`);
+    
+    res.json(produtos);
   } catch (err) {
-    res.status(500).json({ error: "Error ao buscar usuários" })
+    res.status(500).json({ error: "Error ao buscar produtos" })
   }
 });
 
