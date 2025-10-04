@@ -9,10 +9,12 @@ const categoriaSelecionada = ref("");
 export default {
   data() {
     return {
+      produtosOriginais: [],
       produtos: [],
       paginaAtual: 1,
       produtosPorPagina: 20,
-      pesquisar: ''
+      pesquisar: '',
+      ordenacao: ''
     };
   },
 
@@ -31,6 +33,29 @@ export default {
     this.getProdutos();
   },
   watch: {
+  ordenacao(){
+      let produto_ordenado = [...this.produtos]
+
+      switch(this.ordenacao){
+        case "1":
+        this.produtos.sort((a, b) => parseFloat(a.actual_price) - parseFloat(b.actual_price));
+        break;
+      case "2":
+        this.produtos.sort((a, b) => parseFloat(b.actual_price) - parseFloat(a.actual_price));
+        break;
+      case "3":
+        this.produtos.sort((a, b) => b.rating_count - a.rating_count);
+        break;
+      case "4":
+        this.produtos = [...this.produtosOriginais];
+        break;
+      default:
+        this.produtos = [...this.produtosOriginais];
+        break;
+      }
+
+      return produto_ordenado;
+    },
   pesquisar(novoValor) {
     if (novoValor.length >= 2) {
       this.buscarProdutos(novoValor);
@@ -53,6 +78,7 @@ export default {
       try {
         const response = await axios.get("http://localhost:3000/produtos");
         this.produtos = response.data[0];
+        this.produtosOriginais = response.data[0];
       } catch (error) {
         console.error(error);
         alert("Erro ao carregar produtos. Tente novamente.");
@@ -142,13 +168,13 @@ export default {
 
             <div class="flex space-x-2">
               <select
-                class="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+               v-model="ordenacao" class="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <option>Sort By</option>
-                <option>Price: Low to High</option>
-                <option>Price: High to Low</option>
-                <option>Most Popular</option>
-                <option>Newest First</option>
+                <option value="">Ordernar Por</option>
+                <option value="1">Mais Barato</option>
+                <option value="2">Mais Caro</option>
+                <option value="3">Mais Popular</option>
+                <option value="4">Normal</option>
               </select>
             </div>
           </div>
