@@ -1,6 +1,16 @@
 # Ecommerce
 
-### Backend
+<p align="justify" >
+    <strong> 
+A proposta do Projeto descreve que as informações de Produto, Usuario e Venda precisam ser armazenadas em Banco de Dados Relacional, e as atividades de recomandação, Como o clique de produtos com a finalidade de gerar recomandações em Banco de Dados Não Relacional, por tanto, os EndPoints estão separados em 2 arquivos README: 
+    </strong>
+</p>
+
+#### - DADOS DE [VENDAS E USUARIOS](README_SQL.md)
+> #### - DADOS DE PRODUTO E SALVAR USUÁRIO *NO MONGO ABAIXO*!
+---
+
+### Backend - NoSQL
 
 ### PRODUTOS
 
