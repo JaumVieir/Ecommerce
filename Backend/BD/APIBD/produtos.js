@@ -1,8 +1,28 @@
 import express from "express";
 import { getDB, pool } from "../APIBD/db.js";
 import { spawn } from "child_process";
+import { text } from "stream/consumers";
 
 const router = express.Router();
+
+router.get("/getByTexto/:texto", async (req, res) => {
+  try {
+    const { texto } = req.params;
+
+    // Monta o comando com placeholder (seguro)
+    const cmd = `SELECT * FROM produtos WHERE product_name LIKE "%lâmpada%"`;
+    console.log(texto);
+
+    // Passa o parâmetro com % concatenado, fora do SQL
+    const [produtos] = await pool.query(cmd);
+
+    console.log(produtos);
+    res.json(produtos);
+
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar produtos" });
+  }
+});
 
 router.get("/", async (req, res) => {
   try {
