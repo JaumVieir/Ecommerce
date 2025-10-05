@@ -3,8 +3,6 @@ import { ref } from "vue";
 import Papa from "papaparse";
 import axios from "axios";
 
-const categorias = ref([]);
-const categoriaSelecionada = ref("");
 
 export default {
   data() {
@@ -13,28 +11,36 @@ export default {
       paginaAtual: 1,
       produtosPorPagina: 20,
       pesquisar: '',
-      ordenacao: ''
+      ordenacao: '',
+      categorias: ' ',
+      categoriaSelecionada:''
     };
   },
 
   computed: {
+    produtosFiltrados() {
+    if (this.categoriaSelecionada && this.categoriaSelecionada !== '' && this.categoriaSelecionada !== 'Todas as Categorias') {
+      return this.produtos.filter(p => p.category === this.categoriaSelecionada);
+    } else {
+      return this.produtos;
+    }
+  },
     produtosPaginação() {
       const inicio = (this.paginaAtual - 1) * this.produtosPorPagina;
       const fim = inicio + this.produtosPorPagina;
-      return this.produtos.slice(inicio, fim);
+      return this.produtosFiltrados.slice(inicio, fim)
     },
     totalPaginas() {
-      return Math.ceil(this.produtos.length / this.produtosPorPagina);
+      return Math.ceil(this.produtosFiltrados.length / this.produtosPorPagina);
     },
   },
 
   mounted() {
     this.getProdutos();
+    this.getCategoria();
   },
   watch: {
   ordenacao(){
-      let produto_ordenado = [...this.produtos]
-
       switch(this.ordenacao){
         case "1":
         this.produtos.sort((a, b) => parseFloat(a.actual_price) - parseFloat(b.actual_price));
@@ -49,8 +55,6 @@ export default {
         this.getProdutos();
         break;
       }
-
-      return produto_ordenado;
     },
   pesquisar(novoValor) {
     if (novoValor.length >= 2) {
@@ -68,6 +72,17 @@ export default {
       } catch (error) {
         console.error(error);
         alert("Erro ao carregar produtos. Tente novamente.");
+      }
+    },
+    async getCategoria(){
+      try{
+        const response = await axios.get(`http://localhost:3000/produtos/getByCategoria`);
+        console.log(response.data);
+        this.categorias = response.data.map( cat => cat.category);
+        console.log(this.categorias)
+
+      }catch(e){
+        console.error(e);
       }
     },
     async getProdutos() {
