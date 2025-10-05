@@ -45,15 +45,17 @@
     <div class="py-16 bg-gray-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center mb-8">
-          <h2 class="text-3xl font-bold">Baseado na Busca de Produto X</h2>
+          <h2 class="text-3xl font-bold">Relacionados a este produto:</h2>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
           <div
+          v-for="produto in this.predicoes"
+          :key="produto.id"
             class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
           >
             <div class="relative">
               <img
-                src="https://images.unsplash.com/photo-1583846783214-7229a91b20ed?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+                :src="produto.img_link"
                 alt="Summer Floral Dress"
                 class="w-full h-64 object-cover"
                 keywords="Summer Floral Dress, fashion product, ecommerce"
@@ -93,15 +95,15 @@
                     star_half
                   </span>
                 </div>
-                <span class="text-sm text-gray-500 ml-2">4.4</span>
+                <span class="text-sm text-gray-500 ml-2">{{ produto.rating }}</span>
               </div>
               <h3
-                class="font-medium text-lg mb-2 hover:text-primary-600 transition duration-300"
-              >
-                Summer Floral Dress
+                class="font-medium text-base mb-1 hover:text-primary-600 transition duration-300 text-truncate cursor-pointer"
+                  @click="verDetalhes(produto.id)">
+                {{ produto.product_name }}
               </h3>
               <div class="flex items-center justify-between">
-                <div><span class="font-bold">$59.99</span></div>
+                <div><span class="font-bold">{{ formataPreco(produto.actual_price)}}</span></div>
                 <button
                   class="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition duration-300"
                 >
@@ -112,209 +114,7 @@
               </div>
             </div>
           </div>
-          <div
-            class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
-          >
-            <div class="relative">
-              <img
-                src="https://images.unsplash.com/photo-1546435770-a3e426bf472b?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=800&amp;q=80"
-                alt="Wireless Headphones"
-                class="w-full h-64 object-cover"
-                keywords="Wireless Headphones, fashion product, ecommerce"
-              />
-              <div class="absolute top-3 right-3 flex flex-col gap-2">
-                <button
-                  class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0"
-                >
-                  <span class="material-symbols-outlined text-gray-700"
-                    >favorite</span
-                  >
-                </button>
-                <button
-                  class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-75"
-                >
-                  <span class="material-symbols-outlined text-gray-700"
-                    >visibility</span
-                  >
-                </button>
-                <button
-                  class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-150"
-                >
-                  <span class="material-symbols-outlined text-gray-700"
-                    >share</span
-                  >
-                </button>
-              </div>
-            </div>
-            <div class="p-4">
-              <div class="flex items-center mb-2">
-                <div class="flex text-amber-400">
-                  <span class="material-symbols-outlined text-sm"> star </span
-                  ><span class="material-symbols-outlined text-sm"> star </span
-                  ><span class="material-symbols-outlined text-sm"> star </span
-                  ><span class="material-symbols-outlined text-sm"> star </span
-                  ><span class="material-symbols-outlined text-sm">
-                    star_half
-                  </span>
-                </div>
-                <span class="text-sm text-gray-500 ml-2">4.6</span>
-              </div>
-              <h3
-                class="font-medium text-lg mb-2 hover:text-primary-600 transition duration-300"
-              >
-                Wireless Headphones
-              </h3>
-              <div class="flex items-center justify-between">
-                <div><span class="font-bold">$129.99</span></div>
-                <button
-                  class="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition duration-300"
-                >
-                  <span class="material-symbols-outlined text-primary-600"
-                    >add_shopping_cart</span
-                  >
-                </button>
-              </div>
-            </div>
-          </div>
-          <div
-            class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
-          >
-            <div class="relative">
-              <img
-                src="https://images.unsplash.com/photo-1577803645773-f96470509666?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=800&amp;q=80"
-                alt="Designer Sunglasses"
-                class="w-full h-64 object-cover"
-                keywords="Designer Sunglasses, fashion product, ecommerce"
-              />
-              <span
-                class="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded"
-                >SALE</span
-              >
-              <div class="absolute top-3 right-3 flex flex-col gap-2">
-                <button
-                  class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0"
-                >
-                  <span class="material-symbols-outlined text-gray-700"
-                    >favorite</span
-                  >
-                </button>
-                <button
-                  class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-75"
-                >
-                  <span class="material-symbols-outlined text-gray-700"
-                    >visibility</span
-                  >
-                </button>
-                <button
-                  class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-150"
-                >
-                  <span class="material-symbols-outlined text-gray-700"
-                    >share</span
-                  >
-                </button>
-              </div>
-            </div>
-            <div class="p-4">
-              <div class="flex items-center mb-2">
-                <div class="flex text-amber-400">
-                  <span class="material-symbols-outlined text-sm"> star </span
-                  ><span class="material-symbols-outlined text-sm"> star </span
-                  ><span class="material-symbols-outlined text-sm"> star </span
-                  ><span class="material-symbols-outlined text-sm"> star </span
-                  ><span class="material-symbols-outlined text-sm">
-                    star_half
-                  </span>
-                </div>
-                <span class="text-sm text-gray-500 ml-2">4.3</span>
-              </div>
-              <h3
-                class="font-medium text-lg mb-2 hover:text-primary-600 transition duration-300"
-              >
-                Designer Sunglasses
-              </h3>
-              <div class="flex items-center justify-between">
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="font-bold">$89.99</span>
-                    <span class="text-sm text-gray-500 line-through"
-                      >$119.99</span
-                    >
-                  </div>
-                </div>
-                <button
-                  class="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition duration-300"
-                >
-                  <span class="material-symbols-outlined text-primary-600"
-                    >add_shopping_cart</span
-                  >
-                </button>
-              </div>
-            </div>
-          </div>
-          <div
-            class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
-          >
-            <div class="relative">
-              <img
-                src="https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=800&amp;q=80"
-                alt="Slim Fit Chino Pants"
-                class="w-full h-64 object-cover"
-                keywords="Slim Fit Chino Pants, fashion product, ecommerce"
-              />
-              <div class="absolute top-3 right-3 flex flex-col gap-2">
-                <button
-                  class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0"
-                >
-                  <span class="material-symbols-outlined text-gray-700"
-                    >favorite</span
-                  >
-                </button>
-                <button
-                  class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-75"
-                >
-                  <span class="material-symbols-outlined text-gray-700"
-                    >visibility</span
-                  >
-                </button>
-                <button
-                  class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-150"
-                >
-                  <span class="material-symbols-outlined text-gray-700"
-                    >share</span
-                  >
-                </button>
-              </div>
-            </div>
-            <div class="p-4">
-              <div class="flex items-center mb-2">
-                <div class="flex text-amber-400">
-                  <span class="material-symbols-outlined text-sm"> star </span
-                  ><span class="material-symbols-outlined text-sm"> star </span
-                  ><span class="material-symbols-outlined text-sm"> star </span
-                  ><span class="material-symbols-outlined text-sm"> star </span
-                  ><span class="material-symbols-outlined text-sm">
-                    star_half
-                  </span>
-                </div>
-                <span class="text-sm text-gray-500 ml-2">4.1</span>
-              </div>
-              <h3
-                class="font-medium text-lg mb-2 hover:text-primary-600 transition duration-300"
-              >
-                Slim Fit Chino Pants
-              </h3>
-              <div class="flex items-center justify-between">
-                <div><span class="font-bold">$49.99</span></div>
-                <button
-                  class="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition duration-300"
-                >
-                  <span class="material-symbols-outlined text-primary-600"
-                    >add_shopping_cart</span
-                  >
-                </button>
-              </div>
-            </div>
-          </div>
+
         </div>
         <div class="mt-12 flex justify-center"></div>
       </div>
@@ -329,12 +129,14 @@ export default {
   data() {
     return {
       produto: null,
+      predicoes: []
     };
   },
   mounted() {
     this.getProduto();
   },
   methods: {
+    
     async getProduto() {
       try {
         const response = await axios.get(`http://localhost:3000/produtos`);
@@ -342,11 +144,24 @@ export default {
         const produtosArray = response.data[0];
         // Filtra pelo id da rota
         this.produto = produtosArray.find((p) => p.id == this.$route.params.id);
+        const resultado = await axios.get(`http://localhost:3000/produtos/predicao/${this.produto.product_id}`)
+        const rawString = resultado.data;
+        const parsed = JSON.parse(rawString); // transforma a string em objeto
+        this.predicoes = parsed.data.slice(0,4);
+        
+        console.log(this.predicoes);
       } catch (error) {
         console.error(error);
         alert("Erro ao carregar produto.");
       }
     },
+    formataPreco(valor) {
+      if (!valor) return 'R$ 0,00';
+      const numero = typeof valor === 'string' ? parseFloat(valor.replace(",", ".")) : valor;
+      return numero.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+      });
   },
-};
+}}
 </script>

@@ -25,7 +25,7 @@ def recomendacao_conte_val(payload: dict, top_n=10) -> dict:
     if produto_id is None:
         return json.dumps({"ok": False, "error": "ID vazio"}, ensure_ascii=False)
 
-    df = pd.read_csv("C:/Users/User/Projetos/Ecommerce/Backend/BD/Recomendacao/produtos3.csv")
+    df = pd.read_csv("C:/Users/Bitlab/Desktop/Ecommerce/Backend/BD/Recomendacao/produtos3.csv")
     df = df.dropna()
 
     df["product_name"] = df["product_name"].apply(limpa_texto)
@@ -75,7 +75,7 @@ def recomendacao_conte_val(payload: dict, top_n=10) -> dict:
     combina = list(set(recomendacao_conteudo_idx + idx_avaliacoes_similares))
     produtos_recomendados = df.iloc[map(int, recomendacao_conteudo_idx)].copy() # Somente baseado em conjunto
 
-    produtos_recomendados = produtos_recomendados[["product_id", "product_name", "rating", "img_link"]]
+    produtos_recomendados = produtos_recomendados[["product_id", "product_name", "rating", "img_link","actual_price"]]
 
     return json.dumps({"ok": True, "data": produtos_recomendados[:10].to_dict(orient="records")}, ensure_ascii=False)
 
