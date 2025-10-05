@@ -132,5 +132,7 @@ module.exports = {
         }
     },
     plugins: [],
-    important: "#webcrumbs"
+    // O Vue monta a app em '#app' (ver index.html). Definimos important para o seletor #app
+    // para garantir que utilitários Tailwind tenham prioridade frente ao Bootstrap.
+    important: '#app'
 }
