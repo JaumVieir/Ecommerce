@@ -3,7 +3,7 @@ import Detalhes from "../components/Detalhes.vue";
 
 export default {
   components: {
-    Detalhes,
+    Detalhes
   },
   data() {
     return {
@@ -13,7 +13,7 @@ export default {
       exemploCompra: {
         id: 1234,
         data: "09/10/2025",
-        valorTotal: 199.99,
+        valorTotal: 399.97,
         itens: [
           {
             id: 1,
@@ -28,6 +28,18 @@ export default {
             preco: 100.0,
             img_link: "https://via.placeholder.com/50",
           },
+          {
+            id: 3,
+            nome: "Produto Teste 3",
+            preco: 99.99,
+            img_link: "https://via.placeholder.com/60",
+          },
+          {
+            id: 4,
+            nome: "Produto Teste 4",
+            preco: 99.99,
+            img_link: "https://via.placeholder.com/70",
+          },
         ],
       },
     };
@@ -36,6 +48,19 @@ export default {
     verDetalhesCompra(compra) {
       this.compraSelecionada = compra;
       this.modalDetalhes = true;
+    },
+    voltarParaCompras() {
+      this.modalDetalhes = false;
+      this.compraSelecionada = null;
+    },
+    formatarPreco(valor) {
+      if (typeof valor === "number") {
+        return valor.toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        });
+      }
+      return valor;
     },
   },
 };
@@ -91,56 +116,43 @@ export default {
 
       <div class="pt-4 pb-12 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex justify-between items-center mb-8">
-            <h2 class="text-3xl font-bold">Compras Recentes</h2>
-            <div class="flex space-x-2"></div>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            <div
-              class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
-            >
-              <div class="relative">
-                <img
-                  src="https://images.unsplash.com/photo-1583846783214-7229a91b20ed?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=800&amp;q=80"
-                  alt="Summer Floral Dress"
-                  class="w-full h-64 object-cover"
-                  keywords="Summer Floral Dress, fashion product, ecommerce"
-                />
-                <div class="absolute top-3 right-3 flex flex-col gap-2">
-                  <button
-                    class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0"
+          <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <div class="flex justify-between items-center mb-8">
+              <h2 class="text-3xl font-bold">Compras Recentes</h2>
+              <div class="flex space-x-2"></div>
+            </div>
+            <div>
+              <template v-if="!modalDetalhes">
+                <ul>
+                  <li
+                    class="flex items-center border-b py-4"
+                    v-for="compra in [exemploCompra]"
+                    :key="compra.id"
                   >
-                    <span class="material-symbols-outlined text-gray-700"
-                      >favorite</span
+                    <div class="flex-1">
+                      <span class="font-semibold">Compra #{{ compra.id }}</span>
+                    </div>
+                    <button
+                      @click="verDetalhesCompra(compra)"
+                      class="ml-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-bold"
                     >
-                  </button>
-                  <button
-                    class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-75"
-                  >
-                    <span class="material-symbols-outlined text-gray-700"
-                      >visibility</span
-                    >
-                  </button>
-                  <button
-                    class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-150"
-                  >
-                    <span class="material-symbols-outlined text-gray-700"
-                      >share</span
-                    >
-                  </button>
-                </div>
-              </div>
-              <div class="p-4">
+                      Ver Detalhes
+                    </button>
+                  </li>
+                </ul>
+                <div class="mt-12 flex justify-center"></div>
+              </template>
+              <template v-else>
+                <Detalhes :compra="compraSelecionada" />
                 <button
-                  @click="verDetalhesCompra(exemploCompra)"
-                  class="mt-4 w-full py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-bold"
+                  @click="voltarParaCompras"
+                  class="mt-6 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-bold w-full"
                 >
-                  Ver Detalhes
+                  Voltar para Compras
                 </button>
-              </div>
+              </template>
             </div>
           </div>
-          <div class="mt-12 flex justify-center"></div>
         </div>
       </div>
 
@@ -301,21 +313,15 @@ export default {
           </div>
           <div class="mt-12 flex justify-center"></div>
         </div>
-      </div>
-      <div v-if="modalDetalhes" class="flex justify-center mt-8">
-        <Detalhes
-          :compra="compraSelecionada"
-          :show="modalDetalhes"
-          @close="modalDetalhes = false"
-        />
-      </div>
-      <footer class="bg-gray-800 text-gray-200 py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div></div>
+        <!-- Detalhes agora aparece na própria div de compras -->
+        <footer class="bg-gray-800 text-gray-200 py-12">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div></div>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   </div>
 </template>
