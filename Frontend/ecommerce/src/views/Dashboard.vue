@@ -1,3 +1,45 @@
+<script>
+import Detalhes from "../components/Detalhes.vue";
+
+export default {
+  components: {
+    Detalhes,
+  },
+  data() {
+    return {
+      modalDetalhes: false,
+      compraSelecionada: null,
+      // Exemplo de compra para demonstração
+      exemploCompra: {
+        id: 1234,
+        data: "09/10/2025",
+        valorTotal: 199.99,
+        itens: [
+          {
+            id: 1,
+            nome: "Produto Exemplo",
+            preco: 99.99,
+            img_link:
+              "https://m.media-amazon.com/images/I/71vk2qFDSPL._AC_UL320_.jpg,4.7,638,1969.0,2499.0",
+          },
+          {
+            id: 2,
+            nome: "Outro Produto",
+            preco: 100.0,
+            img_link: "https://via.placeholder.com/50",
+          },
+        ],
+      },
+    };
+  },
+  methods: {
+    verDetalhesCompra(compra) {
+      this.compraSelecionada = compra;
+      this.modalDetalhes = true;
+    },
+  },
+};
+</script>
 <template>
   <div id="webcrumbs">
     <div class="min-h-screen bg-gray-50">
@@ -46,6 +88,61 @@
           </div>
         </div>
       </header>
+
+      <div class="pt-4 pb-12 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-bold">Compras Recentes</h2>
+            <div class="flex space-x-2"></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div
+              class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
+            >
+              <div class="relative">
+                <img
+                  src="https://images.unsplash.com/photo-1583846783214-7229a91b20ed?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+                  alt="Summer Floral Dress"
+                  class="w-full h-64 object-cover"
+                  keywords="Summer Floral Dress, fashion product, ecommerce"
+                />
+                <div class="absolute top-3 right-3 flex flex-col gap-2">
+                  <button
+                    class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0"
+                  >
+                    <span class="material-symbols-outlined text-gray-700"
+                      >favorite</span
+                    >
+                  </button>
+                  <button
+                    class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-75"
+                  >
+                    <span class="material-symbols-outlined text-gray-700"
+                      >visibility</span
+                    >
+                  </button>
+                  <button
+                    class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-150"
+                  >
+                    <span class="material-symbols-outlined text-gray-700"
+                      >share</span
+                    >
+                  </button>
+                </div>
+              </div>
+              <div class="p-4">
+                <button
+                  @click="verDetalhesCompra(exemploCompra)"
+                  class="mt-4 w-full py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-bold"
+                >
+                  Ver Detalhes
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="mt-12 flex justify-center"></div>
+        </div>
+      </div>
 
       <div class="pt-4 pb-12 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -204,6 +301,13 @@
           </div>
           <div class="mt-12 flex justify-center"></div>
         </div>
+      </div>
+      <div v-if="modalDetalhes" class="flex justify-center mt-8">
+        <Detalhes
+          :compra="compraSelecionada"
+          :show="modalDetalhes"
+          @close="modalDetalhes = false"
+        />
       </div>
       <footer class="bg-gray-800 text-gray-200 py-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
