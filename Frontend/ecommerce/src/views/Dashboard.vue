@@ -3,7 +3,7 @@ import Detalhes from "../components/Detalhes.vue";
 
 export default {
   components: {
-    Detalhes
+    Detalhes,
   },
   data() {
     return {
@@ -75,13 +75,6 @@ export default {
               <h1 class="text-2xl font-bold text-primary-600">E-Commerce</h1>
             </div>
             <div class="hidden md:flex items-center space-x-8">
-              <router-link
-                to="/"
-                class="text-primary-600 hover:text-primary-700 transition duration-300"
-                style="text-decoration: none !important"
-              >
-                Início
-              </router-link>
               <router-link
                 to="/TodosProdutos"
                 class="text-primary-600 hover:text-primary-700 transition duration-300"

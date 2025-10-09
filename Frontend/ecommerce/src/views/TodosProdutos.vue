@@ -134,16 +134,9 @@ export default {
             </div>
             <div class="hidden md:flex items-center space-x-8">
               <router-link
-                to="/"
-                class="text-primary-600 hover:text-primary-700 transition duration-300"
-                style="text-decoration:none!important;"
-              >
-                Início
-              </router-link>
-              <router-link
                 to="/TodosProdutos"
                 class="text-primary-600 hover:text-primary-700 transition duration-300"
-                style="text-decoration:none!important;"
+                style="text-decoration: none !important"
               >
                 Todos Produtos
               </router-link>
@@ -165,14 +158,18 @@ export default {
                 <router-link
                   to="/Carrinho"
                   class="p-2 rounded-full hover:bg-gray-100 transition duration-300 relative flex items-center"
-                  style="text-decoration:none!important;"
+                  style="text-decoration: none !important"
                 >
-                  <span class="material-symbols-outlined text-primary-600">shopping_cart</span>
+                  <span class="material-symbols-outlined text-primary-600"
+                    >shopping_cart</span
+                  >
                 </router-link>
                 <button
                   class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
                 >
-                  <span class="material-symbols-outlined text-primary-600">person</span>
+                  <span class="material-symbols-outlined text-primary-600"
+                    >person</span
+                  >
                 </button>
               </div>
             </div>

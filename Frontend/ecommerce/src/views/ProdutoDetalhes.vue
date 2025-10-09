@@ -8,13 +8,6 @@
         </div>
         <div class="hidden md:flex items-center space-x-8">
           <router-link
-            to="/"
-            class="text-primary-600 hover:text-primary-700 transition duration-300"
-            style="text-decoration: none !important"
-          >
-            Início
-          </router-link>
-          <router-link
             to="/TodosProdutos"
             class="text-primary-600 hover:text-primary-700 transition duration-300"
             style="text-decoration: none !important"
@@ -212,6 +205,7 @@ export default {
     };
   },
   mounted() {
+    window.scrollTo(0, 0);
     this.getProduto();
   },
   methods: {
