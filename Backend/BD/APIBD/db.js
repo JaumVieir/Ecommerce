@@ -3,7 +3,7 @@ import { MongoClient } from "mongodb";
 
 export const pool = mysql.createPool({
   host: "localhost",
-  port: 3306,
+  port: 3307,
   user: "root",
   password: "Aedg080511@",
   database: "faculdade",

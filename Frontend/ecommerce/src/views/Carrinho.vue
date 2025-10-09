@@ -15,6 +15,15 @@ export default {
         0
       );
     },
+    // Classes dinâmicas: aplica scroll a partir de 3 itens
+    listaCarrinhoClasses() {
+      // Altura alvo ligeiramente menor que 3 linhas para o scroll aparecer já com 3 produtos
+      // min-h de cada item ~7rem (min-h-28) + espaçamento vertical (space-y-6 => 1.5rem)
+      // 3 itens ~= 3*7rem + 2*1.5rem = 24rem. Usamos 23rem para forçar o overflow com 3 itens.
+      return this.carrinho.length >= 3
+        ? "overflow-y-auto max-h-[23rem] pr-2"
+        : "";
+    },
   },
   mounted() {
     // Simulação: buscar carrinho do localStorage ou API
@@ -26,6 +35,24 @@ export default {
       // Exemplo de produtos
       this.carrinho = [
         {
+          id: 1,
+          product_name: "Produto Exemplo",
+          img_link: "https://via.placeholder.com/100",
+          actual_price: "199.99",
+        },
+     {
+          id: 1,
+          product_name: "Produto Exemplo",
+          img_link: "https://via.placeholder.com/100",
+          actual_price: "199.99",
+        },
+          {
+          id: 1,
+          product_name: "Produto Exemplo",
+          img_link: "https://via.placeholder.com/100",
+          actual_price: "199.99",
+        },
+           {
           id: 1,
           product_name: "Produto Exemplo",
           img_link: "https://via.placeholder.com/100",
@@ -89,7 +116,7 @@ export default {
       class="flex flex-1 py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 gap-8"
     >
       <!-- Lado esquerdo: Itens do carrinho -->
-      <section class="w-full md:w-2/3 pr-0 md:pr-8">
+      <section class="w-full md:flex-1 pr-0 md:pr-0">
         <div class="bg-white rounded-2xl shadow-xl p-8">
           <h2 class="text-2xl font-bold mb-8 border-b pb-4">
             Itens no Carrinho
@@ -100,11 +127,11 @@ export default {
           >
             Seu carrinho está vazio.
           </div>
-          <div v-else class="space-y-6">
+          <div v-else :class="['space-y-6', listaCarrinhoClasses]">
             <div
               v-for="produto in carrinho"
               :key="produto.id"
-              class="flex items-center group hover:bg-gray-50 rounded-xl transition p-4 border-b last:border-b-0"
+              class="flex items-center min-h-28 group hover:bg-gray-50 rounded-xl transition p-4 border-b last:border-b-0"
             >
               <img
                 :src="produto.img_link"
@@ -127,7 +154,7 @@ export default {
         </div>
       </section>
       <!-- Lado direito: Resumo da compra -->
-      <aside class="w-full md:w-1/3">
+      <aside class="w-full md:w-[22rem] lg:w-[24rem] flex-shrink-0">
         <div class="bg-white rounded-2xl shadow-xl p-8 sticky top-24">
           <h2 class="text-2xl font-bold mb-8 border-b pb-4">
             Resumo da Compra

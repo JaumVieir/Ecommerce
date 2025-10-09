@@ -1,6 +1,4 @@
 <script>
-import { ref } from "vue";
-import Papa from "papaparse";
 import axios from "axios";
 
 export default {
@@ -74,6 +72,25 @@ export default {
     },
   },
   methods: {
+    getStars(rating) {
+      // Returns an array of 5 positions with values: 'full' | 'half' | 'empty'
+      const num = typeof rating === "number"
+        ? rating
+        : parseFloat(String(rating || 0).replace(",", "."));
+      if (isNaN(num)) return ["empty", "empty", "empty", "empty", "empty"];
+      const clamped = Math.max(0, Math.min(5, num));
+      // Round to nearest 0.5
+      const rounded = Math.round(clamped * 2) / 2;
+      const full = Math.floor(rounded);
+      const hasHalf = rounded % 1 !== 0;
+      const stars = [];
+      for (let i = 0; i < 5; i++) {
+        if (i < full) stars.push("full");
+        else if (i === full && hasHalf) stars.push("half");
+        else stars.push("empty");
+      }
+      return stars;
+    },
     async buscarProdutos(texto) {
       try {
         const response = await axios.get(
@@ -250,16 +267,17 @@ export default {
               </div>
               <div class="p-4">
                 <div class="flex items-center mb-2">
-                  <div class="flex text-amber-400">
-                    <span class="material-symbols-outlined text-sm"> star </span
-                    ><span class="material-symbols-outlined text-sm">
-                      star </span
-                    ><span class="material-symbols-outlined text-sm">
-                      star </span
-                    ><span class="material-symbols-outlined text-sm">
-                      star </span
-                    ><span class="material-symbols-outlined text-sm">
-                      star_half
+                  <div class="flex">
+                    <span
+                      v-for="(tipo, idx) in getStars(produto.rating)"
+                      :key="idx"
+                      class="material-symbols-outlined text-sm"
+                      :class="tipo === 'empty' ? 'text-gray-300' : 'text-yellow-500'"
+                      :style="{
+                        'font-variation-settings': tipo === 'full' || tipo === 'half' ? `'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20` : `'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20`
+                      }"
+                    >
+                      {{ tipo === 'half' ? 'star_half' : 'star' }}
                     </span>
                   </div>
                   <span class="text-sm text-gray-500 ml-2">{{

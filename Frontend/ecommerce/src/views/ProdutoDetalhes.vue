@@ -79,7 +79,7 @@
               <span class="material-symbols-outlined text-lg">star_half</span>
             </div>
             <div class="text-sm text-gray-500">
-              {{ produto.rating }} • {{ produto.reviews_count || 0 }} avaliações
+              {{ produto.rating }} • {{ produto.rating_count || 0 }} avaliações
             </div>
           </div>
 

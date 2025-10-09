@@ -52,6 +52,10 @@ export default {
     voltarParaCompras() {
       this.modalDetalhes = false;
       this.compraSelecionada = null;
+      // Rolando para o topo ao voltar para a lista de compras (mesmo comportamento do ProdutoDetalhes)
+      if (typeof window !== 'undefined') {
+        window.scrollTo(0, 0);
+      }
     },
     formatarPreco(valor) {
       if (typeof valor === "number") {
@@ -159,11 +163,11 @@ export default {
             <div
               class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
             >
-              <div class="relative">
+              <div class="relative relative w-full h-32 bg-white flex items-center justify-center overflow-hidden mt-5">
                 <img
                   src="https://images.unsplash.com/photo-1583846783214-7229a91b20ed?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=800&amp;q=80"
                   alt="Summer Floral Dress"
-                  class="w-full h-64 object-cover"
+                  class="object-contain h-full max-w-full"
                   keywords="Summer Floral Dress, fashion product, ecommerce"
                 />
                 <div class="absolute top-3 right-3 flex flex-col gap-2">
@@ -239,11 +243,11 @@ export default {
             <div
               class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
             >
-              <div class="relative">
+              <div class="relative relative w-full h-32 bg-white flex items-center justify-center overflow-hidden mt-5">
                 <img
                   src="https://images.unsplash.com/photo-1583846783214-7229a91b20ed?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=800&amp;q=80"
                   alt="Summer Floral Dress"
-                  class="w-full h-64 object-cover"
+                  class="object-contain h-full max-w-full"
                   keywords="Summer Floral Dress, fashion product, ecommerce"
                 />
                 <div class="absolute top-3 right-3 flex flex-col gap-2">
