@@ -1,11 +1,12 @@
 import mysql from "mysql2/promise";
 import { MongoClient } from "mongodb";
+import "dotenv/config"; // atalaho para importar e chamar a função dotenv.config() automaticamente
 
 export const pool = mysql.createPool({
   host: "localhost",
-  port: 3307,
+  port: process.env.DB_PORT,
   user: "root",
-  password: "Aedg080511@",
+  password: process.env.DB_PASSWORD,
   database: "faculdade",
   waitForConnections: true,
   connectionLimit: 10,
