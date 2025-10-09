@@ -9,30 +9,38 @@
         <div class="hidden md:flex items-center space-x-8">
           <router-link
             to="/"
-            class="hover:text-primary-600 transition duration-300"
-            >Início</router-link
+            class="text-primary-600 hover:text-primary-700 transition duration-300"
+            style="text-decoration: none !important"
           >
+            Início
+          </router-link>
           <router-link
             to="/TodosProdutos"
-            class="hover:text-primary-600 transition duration-300"
-            >Todos Produtos</router-link
+            class="text-primary-600 hover:text-primary-700 transition duration-300"
+            style="text-decoration: none !important"
           >
+            Todos Produtos
+          </router-link>
         </div>
         <div class="flex items-center space-x-4">
-          <button
-            class="p-2 rounded-full hover:bg-gray-100 transition duration-300 relative"
-          >
-            <span class="material-symbols-outlined">shopping_cart</span>
-            <span
-              class="absolute -top-1 -right-1 bg-primary-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full"
-              >3</span
+          <div class="flex items-center gap-2">
+            <router-link
+              to="/Carrinho"
+              class="p-2 rounded-full hover:bg-gray-100 transition duration-300 relative flex items-center"
+              style="text-decoration: none !important"
             >
-          </button>
-          <button
-            class="p-2 rounded-full hover:bg-gray-100 transition duration-300"
-          >
-            <span class="material-symbols-outlined">person</span>
-          </button>
+              <span class="material-symbols-outlined text-primary-600"
+                >shopping_cart</span
+              >
+            </router-link>
+            <button
+              class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
+            >
+              <span class="material-symbols-outlined text-primary-600"
+                >person</span
+              >
+            </button>
+          </div>
         </div>
       </div>
     </div>

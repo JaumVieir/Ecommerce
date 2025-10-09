@@ -3,32 +3,37 @@ import { ref } from "vue";
 import Papa from "papaparse";
 import axios from "axios";
 
-
 export default {
   data() {
     return {
       produtos: [],
       paginaAtual: 1,
       produtosPorPagina: 20,
-      pesquisar: '',
-      ordenacao: '',
-      categorias: ' ',
-      categoriaSelecionada:''
+      pesquisar: "",
+      ordenacao: "",
+      categorias: " ",
+      categoriaSelecionada: "",
     };
   },
 
   computed: {
     produtosFiltrados() {
-    if (this.categoriaSelecionada && this.categoriaSelecionada !== '' && this.categoriaSelecionada !== 'Todas as Categorias') {
-      return this.produtos.filter(p => p.category === this.categoriaSelecionada);
-    } else {
-      return this.produtos;
-    }
-  },
+      if (
+        this.categoriaSelecionada &&
+        this.categoriaSelecionada !== "" &&
+        this.categoriaSelecionada !== "Todas as Categorias"
+      ) {
+        return this.produtos.filter(
+          (p) => p.category === this.categoriaSelecionada
+        );
+      } else {
+        return this.produtos;
+      }
+    },
     produtosPaginação() {
       const inicio = (this.paginaAtual - 1) * this.produtosPorPagina;
       const fim = inicio + this.produtosPorPagina;
-      return this.produtosFiltrados.slice(inicio, fim)
+      return this.produtosFiltrados.slice(inicio, fim);
     },
     totalPaginas() {
       return Math.ceil(this.produtosFiltrados.length / this.produtosPorPagina);
@@ -40,48 +45,55 @@ export default {
     this.getCategoria();
   },
   watch: {
-  ordenacao(){
-      switch(this.ordenacao){
+    ordenacao() {
+      switch (this.ordenacao) {
         case "1":
-        this.produtos.sort((a, b) => parseFloat(a.actual_price) - parseFloat(b.actual_price));
-        break;
-      case "2":
-        this.produtos.sort((a, b) => parseFloat(b.actual_price) - parseFloat(a.actual_price));
-        break;
-      case "3":
-        this.produtos.sort((a, b) => b.rating_count - a.rating_count);
-        break;
-      default:
-        this.getProdutos();
-        break;
+          this.produtos.sort(
+            (a, b) => parseFloat(a.actual_price) - parseFloat(b.actual_price)
+          );
+          break;
+        case "2":
+          this.produtos.sort(
+            (a, b) => parseFloat(b.actual_price) - parseFloat(a.actual_price)
+          );
+          break;
+        case "3":
+          this.produtos.sort((a, b) => b.rating_count - a.rating_count);
+          break;
+        default:
+          this.getProdutos();
+          break;
       }
     },
-  pesquisar(novoValor) {
-    if (novoValor.length >= 2) {
-      this.buscarProdutos(novoValor);
-    } else {
-      this.getProdutos();
-    }
-  }
-},
+    pesquisar(novoValor) {
+      if (novoValor.length >= 2) {
+        this.buscarProdutos(novoValor);
+      } else {
+        this.getProdutos();
+      }
+    },
+  },
   methods: {
     async buscarProdutos(texto) {
       try {
-        const response = await axios.get(`http://localhost:3000/produtos/getByTexto/${texto}`);
+        const response = await axios.get(
+          `http://localhost:3000/produtos/getByTexto/${texto}`
+        );
         this.produtos = response.data;
       } catch (error) {
         console.error(error);
         alert("Erro ao carregar produtos. Tente novamente.");
       }
     },
-    async getCategoria(){
-      try{
-        const response = await axios.get(`http://localhost:3000/produtos/getByCategoria`);
+    async getCategoria() {
+      try {
+        const response = await axios.get(
+          `http://localhost:3000/produtos/getByCategoria`
+        );
         console.log(response.data);
-        this.categorias = response.data.map( cat => cat.category);
-        console.log(this.categorias)
-
-      }catch(e){
+        this.categorias = response.data.map((cat) => cat.category);
+        console.log(this.categorias);
+      } catch (e) {
         console.error(e);
       }
     },
@@ -99,13 +111,14 @@ export default {
       this.$router.push({ path: `/produto/${id}` });
     },
     formataPreco(valor) {
-      if (!valor) return 'R$ 0,00';
-      const numero = typeof valor === 'string' ? parseFloat(valor.replace(",", ".")) : valor;
-      return numero.toLocaleString('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
+      if (!valor) return "R$ 0,00";
+      const numero =
+        typeof valor === "string" ? parseFloat(valor.replace(",", ".")) : valor;
+      return numero.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
       });
-}
+    },
   },
 };
 </script>
@@ -122,13 +135,15 @@ export default {
             <div class="hidden md:flex items-center space-x-8">
               <router-link
                 to="/"
-                class="hover:text-primary-600 transition duration-300"
+                class="text-primary-600 hover:text-primary-700 transition duration-300"
+                style="text-decoration:none!important;"
               >
                 Início
               </router-link>
               <router-link
                 to="/TodosProdutos"
-                class="hover:text-primary-600 transition duration-300"
+                class="text-primary-600 hover:text-primary-700 transition duration-300"
+                style="text-decoration:none!important;"
               >
                 Todos Produtos
               </router-link>
@@ -146,20 +161,20 @@ export default {
                   >search</span
                 >
               </div>
-              <button
-                class="p-2 rounded-full hover:bg-gray-100 transition duration-300 relative"
-              >
-                <span class="material-symbols-outlined">shopping_cart</span>
-                <span
-                  class="absolute -top-1 -right-1 bg-primary-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full"
-                  >3</span
+              <div class="flex items-center gap-2">
+                <router-link
+                  to="/Carrinho"
+                  class="p-2 rounded-full hover:bg-gray-100 transition duration-300 relative flex items-center"
+                  style="text-decoration:none!important;"
                 >
-              </button>
-              <button
-                class="p-2 rounded-full hover:bg-gray-100 transition duration-300"
-              >
-                <span class="material-symbols-outlined">person</span>
-              </button>
+                  <span class="material-symbols-outlined text-primary-600">shopping_cart</span>
+                </router-link>
+                <button
+                  class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
+                >
+                  <span class="material-symbols-outlined text-primary-600">person</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -186,7 +201,8 @@ export default {
 
             <div class="flex space-x-2">
               <select
-               v-model="ordenacao" class="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                v-model="ordenacao"
+                class="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="">Ordernar Por</option>
                 <option value="1">Mais Barato</option>
@@ -202,12 +218,13 @@ export default {
               :key="produto.id"
               class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
             >
-              <div class="relative relative w-full h-32 bg-white flex items-center justify-center overflow-hidden mt-5">
+              <div
+                class="relative relative w-full h-32 bg-white flex items-center justify-center overflow-hidden mt-5"
+              >
                 <img
-                
                   :src="produto.img_link"
                   alt="SAMSUNG Smart TV Crystal 50"
-                  class=" object-contain h-full max-w-full"
+                  class="object-contain h-full max-w-full"
                   keywords="SAMSUNG Smart TV Crystal 50, TV, electronics, ecommerce"
                 />
                 <div class="absolute top-3 right-3 flex flex-col gap-2">
@@ -260,7 +277,9 @@ export default {
                 </h3>
                 <div class="flex items-center justify-between">
                   <div>
-                    <span class="font-bold">{{ formataPreco(produto.actual_price) }}</span>
+                    <span class="font-bold">{{
+                      formataPreco(produto.actual_price)
+                    }}</span>
                   </div>
                   <button
                     class="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition duration-300"

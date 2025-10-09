@@ -5,6 +5,7 @@ import TodosProdutos from "../views/TodosProdutos.vue"
 import Login from "../views/Login.vue"
 import Cadastro from "../views/Cadastro.vue"
 import ProdutoDetalhes from '../views/ProdutoDetalhes.vue';
+import Carrinho from "../views/Carrinho.vue"
 
 const routes = [
     { path : "/", component: Dashboard},
@@ -12,6 +13,7 @@ const routes = [
     { path : "/Login", component: Login},
     { path : "/Cadastro", component: Cadastro},
     { path: '/produto/:id', component: ProdutoDetalhes, props: true },
+    { path : "/Carrinho", component: Carrinho},
 ]
 
 const router = createRouter({
