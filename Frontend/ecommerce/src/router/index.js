@@ -38,7 +38,7 @@ function getAuth() {
         }
 
         if (!to.meta?.requiresAuth && loggedIn && (to.path === "/" || to.path === "/Cadstro")) {
-            return { path: "/Dashboard"}
+            return { path: "/TodosProdutos"}
         }
     })
 export default router
