@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory} from "vue-router"
+import { getAuth } from "../services/auth.js"
 
 import Dashboard from "../views/Dashboard.vue"
 import TodosProdutos from "../views/TodosProdutos.vue"
@@ -22,13 +23,6 @@ const router = createRouter({
     routes,
 })
 
-function getAuth() {
-    try {
-        return JSON.parse(localStorage.getItem("auth" ) || "{}")
-    } catch {
-        return {}
-    }
-}
     router.beforeEach((to) => {
         const {userId} = getAuth();
         const loggedIn = !!userId;
@@ -37,7 +31,7 @@ function getAuth() {
             return { path: "/", query: { redirect: to.fullPath}}
         }
 
-        if (!to.meta?.requiresAuth && loggedIn && (to.path === "/" || to.path === "/Cadstro")) {
+        if (!to.meta?.requiresAuth && loggedIn && (to.path === "/" || to.path === "/Cadastro")) {
             return { path: "/TodosProdutos"}
         }
     })
