@@ -136,6 +136,11 @@ export default {
         currency: "BRL",
       });
     },
+
+    logout() {
+      localStorage.removeItem("auth");
+      this.$router.push({ path: "/" });
+    },
   },
 };
 </script>
@@ -186,6 +191,14 @@ export default {
                 >
                   <span class="material-symbols-outlined text-primary-600"
                     >person</span
+                  >
+                </button>
+                <button
+                  class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
+                  @click="logout"
+                >
+                  <span class="material-symbols-outlined text-red-600"
+                    >logout</span
                   >
                 </button>
               </div>
