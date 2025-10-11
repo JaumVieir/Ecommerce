@@ -1,6 +1,7 @@
 <script>
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
+import { getAuth } from "../services/auth.js";
 
 export default {
   data() {
@@ -10,10 +11,16 @@ export default {
   },
   computed: {
     valorTotal() {
-      return this.carrinho.reduce(
-        (acc, prod) => acc + parseFloat(prod.actual_price),
-        0
-      );
+      return this.carrinho.reduce((acc, prod) => {
+        const preco =
+          parseFloat(
+            typeof prod.actual_price === "string"
+              ? prod.actual_price.replace(",", ".")
+              : prod.actual_price
+          ) || 0;
+        const qtd = Number(prod.quantidade) || 1;
+        return acc + preco * qtd;
+      }, 0);
     },
     // Classes dinâmicas: aplica scroll a partir de 3 itens
     listaCarrinhoClasses() {
@@ -30,35 +37,16 @@ export default {
     // Substitua por chamada real se necessário
     const carrinhoSalvo = localStorage.getItem("carrinho");
     if (carrinhoSalvo) {
-      this.carrinho = JSON.parse(carrinhoSalvo);
+      const arr = JSON.parse(carrinhoSalvo);
+      // Garante que cada item tenha quantidade >= 1
+      this.carrinho = (arr || []).map((p) => ({
+        ...p,
+        quantidade: Number(p.quantidade) > 0 ? Number(p.quantidade) : 1,
+      }));
+      localStorage.setItem("carrinho", JSON.stringify(this.carrinho));
     } else {
       // Exemplo de produtos
-      this.carrinho = [
-        {
-          id: 1,
-          product_name: "Produto Exemplo",
-          img_link: "https://via.placeholder.com/100",
-          actual_price: "199.99",
-        },
-     {
-          id: 1,
-          product_name: "Produto Exemplo",
-          img_link: "https://via.placeholder.com/100",
-          actual_price: "199.99",
-        },
-          {
-          id: 1,
-          product_name: "Produto Exemplo",
-          img_link: "https://via.placeholder.com/100",
-          actual_price: "199.99",
-        },
-           {
-          id: 1,
-          product_name: "Produto Exemplo",
-          img_link: "https://via.placeholder.com/100",
-          actual_price: "199.99",
-        },
-      ];
+      this.carrinho = [];
     }
   },
   methods: {
@@ -72,8 +60,101 @@ export default {
       });
     },
     finalizarCompra() {
-      alert("Compra finalizada com sucesso!");
-      // Aqui você pode implementar a lógica de finalizar compra
+      try {
+        if (!this.carrinho || this.carrinho.length === 0) {
+          alert("Seu carrinho está vazio.");
+          return;
+        }
+
+        // Verifica autenticação antes de criar a compra
+        const { userId } = getAuth();
+        if (!userId) {
+          // Usuário não logado: não cria compra, apenas mantém o carrinho salvo e redireciona para login
+          localStorage.setItem("carrinho", JSON.stringify(this.carrinho));
+          alert("Você precisa fazer login para finalizar a compra.");
+          // Inclui um redirect para voltar ao carrinho após o login
+          this.$router.push({ path: "/login", query: { redirect: "/Carrinho" } });
+          return;
+        }
+
+        // Usuário logado: montar itens e concluir a compra normalmente
+        const itens = this.carrinho.map((p) => {
+          const preco =
+            (typeof p.actual_price === "string"
+              ? parseFloat(p.actual_price.replace(",", "."))
+              : Number(p.actual_price)) || 0;
+          const quantidade = Number(p.quantidade) || 1;
+          return {
+            id: p.id,
+            nome: p.product_name ?? p.nome ?? "Produto",
+            preco,
+            img_link: p.img_link,
+            quantidade,
+          };
+        });
+
+        const valorTotal = itens.reduce(
+          (acc, it) => acc + it.preco * (Number(it.quantidade) || 1),
+          0
+        );
+
+        const agora = new Date();
+        const compra = {
+          id: Date.now(),
+          data: agora.toLocaleDateString("pt-BR"),
+          valorTotal,
+          itens,
+          userId,
+        };
+
+        const storageKey = `compras:${userId}`;
+        const comprasExistentes = JSON.parse(
+          localStorage.getItem(storageKey) || "[]"
+        );
+        comprasExistentes.unshift(compra);
+        localStorage.setItem(storageKey, JSON.stringify(comprasExistentes));
+
+        // Limpa carrinho (estado e localStorage) e redireciona
+        this.carrinho = [];
+        localStorage.removeItem("carrinho");
+        alert("Compra finalizada com sucesso!");
+        this.$router.push({ path: "/Dashboard" });
+      } catch (e) {
+        console.error(e);
+        alert("Não foi possível finalizar a compra.");
+      }
+    },
+    irParaDashboardOuLogin() {
+      const { userId } = getAuth();
+      if (userId) {
+        this.$router.push({ path: "/Dashboard" });
+      } else {
+        this.$router.push({ path: "/login" });
+      }
+    },
+    logout() {
+      localStorage.removeItem("auth");
+      this.$router.push({ path: "/login" });
+    },
+    removerDoCarrinho(id) {
+      try {
+        const idx = this.carrinho.findIndex((p) => p.id === id);
+        if (idx !== -1) {
+          const item = this.carrinho[idx];
+          const atual = Number(item.quantidade) || 1;
+          if (atual > 1) {
+            // Decrementa apenas uma unidade
+            this.carrinho[idx] = { ...item, quantidade: atual - 1 };
+          } else {
+            // Se chegar a zero, remove o item
+            this.carrinho.splice(idx, 1);
+          }
+          localStorage.setItem("carrinho", JSON.stringify(this.carrinho));
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Não foi possível remover o produto.");
+      }
     },
   },
 };
@@ -91,7 +172,7 @@ export default {
           </div>
           <div class="hidden md:flex items-center space-x-8">
             <router-link
-              to="/TodosProdutos"
+              to="/"
               class="text-primary-600 hover:text-primary-700 transition duration-300"
               style="text-decoration: none !important"
             >
@@ -102,9 +183,19 @@ export default {
             <div class="flex items-center gap-2">
               <button
                 class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
+                style="text-decoration: none !important"
+                @click="irParaDashboardOuLogin"
               >
                 <span class="material-symbols-outlined text-primary-600"
                   >person</span
+                >
+              </button>
+              <button
+                class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
+                @click="logout"
+              >
+                <span class="material-symbols-outlined text-red-600"
+                  >logout</span
                 >
               </button>
             </div>
@@ -113,10 +204,10 @@ export default {
       </div>
     </header>
     <main
-      class="flex flex-1 py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 gap-8"
+      class="flex flex-1 py-16 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-10 xl:px-16 gap-8"
     >
       <!-- Lado esquerdo: Itens do carrinho -->
-      <section class="w-full md:flex-1 pr-0 md:pr-0">
+      <div id="bloco-itens-carrinho" class="w-full md:flex-1 pr-0 md:pr-0">
         <div class="bg-white rounded-2xl shadow-xl p-8">
           <h2 class="text-2xl font-bold mb-8 border-b pb-4">
             Itens no Carrinho
@@ -144,17 +235,34 @@ export default {
                 >
                   {{ produto.product_name }}
                 </h3>
-                <span class="font-bold text-xl text-primary-700">{{
-                  formataPreco(produto.actual_price)
-                }}</span>
+                <div class="flex items-center gap-3">
+                  <span class="font-bold text-xl text-primary-700">{{
+                    formataPreco(produto.actual_price)
+                  }}</span>
+                  <span class="text-sm text-gray-600"
+                    >x {{ produto.quantidade }}</span
+                  >
+                </div>
               </div>
-              <!-- Botão remover futuro -->
+              <!-- Botão remover -->
+              <button
+                class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
+                title="Remover do carrinho"
+                @click="removerDoCarrinho(produto.id)"
+              >
+                <span class="material-symbols-outlined text-red-600"
+                  >delete</span
+                >
+              </button>
             </div>
           </div>
         </div>
-      </section>
+      </div>
       <!-- Lado direito: Resumo da compra -->
-      <aside class="w-full md:w-[22rem] lg:w-[24rem] flex-shrink-0">
+      <div
+        id="bloco-resumo-compra"
+        class="w-full md:w-[22rem] lg:w-[24rem] flex-shrink-0"
+      >
         <div class="bg-white rounded-2xl shadow-xl p-8 sticky top-24">
           <h2 class="text-2xl font-bold mb-8 border-b pb-4">
             Resumo da Compra
@@ -172,7 +280,7 @@ export default {
             Finalizar Compra
           </button>
         </div>
-      </aside>
+      </div>
     </main>
     <footer class="bg-gray-800 text-gray-200 py-12 mt-auto">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

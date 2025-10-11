@@ -1,5 +1,6 @@
 <script>
 import axios from "axios";
+import { getAuth } from "../services/auth.js";
 
 export default {
   data() {
@@ -11,6 +12,10 @@ export default {
       ordenacao: "",
       categorias: " ",
       categoriaSelecionada: "",
+      // Toast simples para feedback de adição ao carrinho
+      toastVisible: false,
+      toastMessage: "",
+      toastTimer: null,
     };
   },
 
@@ -72,11 +77,53 @@ export default {
     },
   },
   methods: {
+    irParaDashboardOuLogin() {
+      const { userId } = getAuth();
+      if (userId) {
+        this.$router.push({ path: "/Dashboard" });
+      } else {
+        this.$router.push({ path: "/login" });
+      }
+    },
+    addAoCarrinho(produto) {
+      try {
+        const carrinhoStr = localStorage.getItem("carrinho");
+        const carrinho = carrinhoStr ? JSON.parse(carrinhoStr) : [];
+        const existente = carrinho.find((p) => p.id == produto.id);
+        if (existente) {
+          existente.quantidade = (Number(existente.quantidade) || 1) + 1;
+        } else {
+          const item = {
+            id: produto.id,
+            product_name: produto.product_name,
+            img_link: produto.img_link,
+            actual_price: produto.actual_price,
+            quantidade: 1,
+          };
+          carrinho.push(item);
+        }
+        localStorage.setItem("carrinho", JSON.stringify(carrinho));
+        this.openToast("Produto adicionado ao carrinho");
+      } catch (e) {
+        console.error(e);
+        this.openToast("Não foi possível adicionar ao carrinho");
+      }
+    },
+    openToast(msg) {
+      this.toastMessage = msg;
+      this.toastVisible = true;
+      if (this.toastTimer) clearTimeout(this.toastTimer);
+      this.toastTimer = setTimeout(() => {
+        this.toastVisible = false;
+        this.toastTimer = null;
+      }, 2000);
+    },
     getStars(rating) {
       // Returns an array of 5 positions with values: 'full' | 'half' | 'empty'
-      const num = typeof rating === "number"
-        ? rating
-        : parseFloat(String(rating || 0).replace(",", "."));
+      const num =
+        typeof rating === "number"
+          ? rating
+          : parseFloat(String(rating || 0).replace(",", "."));
       if (isNaN(num)) return ["empty", "empty", "empty", "empty", "empty"];
       const clamped = Math.max(0, Math.min(5, num));
       // Round to nearest 0.5
@@ -139,7 +186,7 @@ export default {
 
     logout() {
       localStorage.removeItem("auth");
-      this.$router.push({ path: "/" });
+      this.$router.push({ path: "/login" });
     },
   },
 };
@@ -155,13 +202,6 @@ export default {
               <h1 class="text-2xl font-bold text-primary-600">E-Commerce</h1>
             </div>
             <div class="hidden md:flex items-center space-x-8">
-              <router-link
-                to="/TodosProdutos"
-                class="text-primary-600 hover:text-primary-700 transition duration-300"
-                style="text-decoration: none !important"
-              >
-                Todos Produtos
-              </router-link>
             </div>
             <div class="flex items-center space-x-4">
               <div class="relative">
@@ -188,10 +228,10 @@ export default {
                 </router-link>
                 <button
                   class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
+                  style="text-decoration: none !important"
+                  @click="irParaDashboardOuLogin"
                 >
-                  <span class="material-symbols-outlined text-primary-600"
-                    >person</span
-                  >
+                  <span class="material-symbols-outlined text-primary-600">person</span>
                 </button>
                 <button
                   class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
@@ -285,12 +325,17 @@ export default {
                       v-for="(tipo, idx) in getStars(produto.rating)"
                       :key="idx"
                       class="material-symbols-outlined text-sm"
-                      :class="tipo === 'empty' ? 'text-gray-300' : 'text-yellow-500'"
+                      :class="
+                        tipo === 'empty' ? 'text-gray-300' : 'text-yellow-500'
+                      "
                       :style="{
-                        'font-variation-settings': tipo === 'full' || tipo === 'half' ? `'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20` : `'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20`
+                        'font-variation-settings':
+                          tipo === 'full' || tipo === 'half'
+                            ? `'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20`
+                            : `'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20`,
                       }"
                     >
-                      {{ tipo === 'half' ? 'star_half' : 'star' }}
+                      {{ tipo === "half" ? "star_half" : "star" }}
                     </span>
                   </div>
                   <span class="text-sm text-gray-500 ml-2">{{
@@ -311,6 +356,7 @@ export default {
                   </div>
                   <button
                     class="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition duration-300"
+                    @click="addAoCarrinho(produto)"
                   >
                     <span class="material-symbols-outlined text-primary-600"
                       >add_shopping_cart</span
@@ -352,5 +398,14 @@ export default {
         </div>
       </footer>
     </div>
+  </div>
+  <!-- Toast simples -->
+  <div
+    v-if="toastVisible"
+    class="fixed top-4 right-4 z-50 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg"
+    role="status"
+    aria-live="polite"
+  >
+    {{ toastMessage }}
   </div>
 </template>

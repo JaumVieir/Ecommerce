@@ -28,7 +28,7 @@ export default {
 
         alert("Login realizado com sucesso!")
 
-        const redirect = this.$route.query.redirect || "/TodosProdutos"; 
+        const redirect = this.$route.query.redirect || "/"; 
         this.$router.push(redirect)
 
   } catch (error) {
