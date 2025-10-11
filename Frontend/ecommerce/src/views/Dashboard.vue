@@ -1,5 +1,6 @@
 <script>
 import Detalhes from "../components/Detalhes.vue";
+import { getAuth } from "../services/auth.js";
 
 export default {
   components: {
@@ -9,40 +10,71 @@ export default {
     return {
       modalDetalhes: false,
       compraSelecionada: null,
-      // Exemplo de compra para demonstração
-      exemploCompra: {
-        id: 1234,
-        data: "09/10/2025",
-        valorTotal: 399.97,
-        itens: [
-          {
-            id: 1,
-            nome: "Produto Exemplo",
-            preco: 99.99,
-            img_link:
-              "https://m.media-amazon.com/images/I/71vk2qFDSPL._AC_UL320_.jpg,4.7,638,1969.0,2499.0",
-          },
-          {
-            id: 2,
-            nome: "Outro Produto",
-            preco: 100.0,
-            img_link: "https://via.placeholder.com/50",
-          },
-          {
-            id: 3,
-            nome: "Produto Teste 3",
-            preco: 99.99,
-            img_link: "https://via.placeholder.com/60",
-          },
-          {
-            id: 4,
-            nome: "Produto Teste 4",
-            preco: 99.99,
-            img_link: "https://via.placeholder.com/70",
-          },
-        ],
-      },
+      compras: [],
     };
+  },
+  mounted() {
+    try {
+      const { userId } = getAuth();
+      if (!userId) {
+        // Sem usuário logado, não exibe compras pessoais
+        this.compras = [];
+        return;
+      }
+
+      const keyUser = `compras:${userId}`;
+      const keyGlobalLegacy = "compras"; // legado global
+      const keyAnon = "compras:anon"; // compras feitas antes do login
+
+      // Migração simples: se ainda existir a chave global, move para a chave do usuário
+      const legacy = JSON.parse(localStorage.getItem(keyGlobalLegacy) || "null");
+      if (Array.isArray(legacy) && legacy.length) {
+        const existentesUser = JSON.parse(localStorage.getItem(keyUser) || "[]");
+        const mergeLegacy = [...legacy, ...existentesUser];
+        // de-dupe por id, mantendo o primeiro (mais antigo ou mais recente?) aqui manteremos o mais recente por estar primeiro
+        const vistos = new Set();
+        const dedup = mergeLegacy.filter((c) => {
+          if (!c || typeof c !== "object") return false;
+          const id = c.id ?? Math.random();
+          if (vistos.has(id)) return false;
+          vistos.add(id);
+          return true;
+        });
+        localStorage.setItem(keyUser, JSON.stringify(dedup));
+        localStorage.removeItem(keyGlobalLegacy);
+      }
+
+      // Migra também compras anônimas desse dispositivo para o usuário após login
+      const anonList = JSON.parse(localStorage.getItem(keyAnon) || "null");
+      if (Array.isArray(anonList) && anonList.length) {
+        const existentesUser = JSON.parse(localStorage.getItem(keyUser) || "[]");
+        const mergeAnon = [...anonList, ...existentesUser];
+        const vistos2 = new Set();
+        const dedup2 = mergeAnon.filter((c) => {
+          if (!c || typeof c !== "object") return false;
+          const id = c.id ?? Math.random();
+          if (vistos2.has(id)) return false;
+          vistos2.add(id);
+          return true;
+        });
+        localStorage.setItem(keyUser, JSON.stringify(dedup2));
+        localStorage.removeItem(keyAnon);
+      }
+
+      const comprasSalvasUser = JSON.parse(localStorage.getItem(keyUser) || "[]");
+      // Garante estrutura mínima
+      this.compras = Array.isArray(comprasSalvasUser)
+        ? comprasSalvasUser.map((c) => ({
+            id: c.id ?? Date.now(),
+            data: c.data ?? new Date().toLocaleDateString("pt-BR"),
+            valorTotal: Number(c.valorTotal) || 0,
+            itens: Array.isArray(c.itens) ? c.itens : [],
+          }))
+        : [];
+    } catch (e) {
+      console.error(e);
+      this.compras = [];
+    }
   },
   methods: {
     verDetalhesCompra(compra) {
@@ -53,7 +85,7 @@ export default {
       this.modalDetalhes = false;
       this.compraSelecionada = null;
       // Rolando para o topo ao voltar para a lista de compras (mesmo comportamento do ProdutoDetalhes)
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         window.scrollTo(0, 0);
       }
     },
@@ -64,7 +96,20 @@ export default {
           currency: "BRL",
         });
       }
-      return valor;
+      const n = Number(valor) || 0;
+      return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    },
+    irParaDashboardOuLogin() {
+      const { userId } = getAuth();
+      if (userId) {
+        this.$router.push({ path: "/Dashboard" });
+      } else {
+        this.$router.push({ path: "/login" });
+      }
+    },
+    logout() {
+      localStorage.removeItem("auth");
+      this.$router.push({ path: "/login" });
     },
   },
 };
@@ -80,7 +125,7 @@ export default {
             </div>
             <div class="hidden md:flex items-center space-x-8">
               <router-link
-                to="/TodosProdutos"
+                to="/"
                 class="text-primary-600 hover:text-primary-700 transition duration-300"
                 style="text-decoration: none !important"
               >
@@ -100,9 +145,10 @@ export default {
                 </router-link>
                 <button
                   class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
+                  @click="logout"
                 >
-                  <span class="material-symbols-outlined text-primary-600"
-                    >person</span
+                  <span class="material-symbols-outlined text-red-600"
+                    >logout</span
                   >
                 </button>
               </div>
@@ -120,15 +166,20 @@ export default {
             </div>
             <div>
               <template v-if="!modalDetalhes">
-                <ul>
+                <div v-if="!compras.length" class="text-gray-500 text-lg text-center py-8">
+                  Você ainda não possui compras recentes.
+                </div>
+                <ul v-else>
                   <li
                     class="flex items-center border-b py-4"
-                    v-for="compra in [exemploCompra]"
+                    v-for="compra in compras"
                     :key="compra.id"
                   >
                     <div class="flex-1">
-                      <span class="font-semibold">Compra #{{ compra.id }}</span>
+                      <div class="font-semibold">Compra #{{ compra.id }}</div>
+                      <div class="text-sm text-gray-600">Data: {{ compra.data }}</div>
                     </div>
+                    <div class="mr-4 font-bold">{{ formatarPreco(compra.valorTotal) }}</div>
                     <button
                       @click="verDetalhesCompra(compra)"
                       class="ml-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-bold"
@@ -163,7 +214,9 @@ export default {
             <div
               class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
             >
-              <div class="relative relative w-full h-32 bg-white flex items-center justify-center overflow-hidden mt-5">
+              <div
+                class="relative relative w-full h-32 bg-white flex items-center justify-center overflow-hidden mt-5"
+              >
                 <img
                   src="https://images.unsplash.com/photo-1583846783214-7229a91b20ed?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=800&amp;q=80"
                   alt="Summer Floral Dress"
@@ -243,7 +296,9 @@ export default {
             <div
               class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
             >
-              <div class="relative relative w-full h-32 bg-white flex items-center justify-center overflow-hidden mt-5">
+              <div
+                class="relative relative w-full h-32 bg-white flex items-center justify-center overflow-hidden mt-5"
+              >
                 <img
                   src="https://images.unsplash.com/photo-1583846783214-7229a91b20ed?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=800&amp;q=80"
                   alt="Summer Floral Dress"
