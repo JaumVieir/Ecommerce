@@ -9,13 +9,13 @@ import ProdutoDetalhes from '../views/ProdutoDetalhes.vue';
 import Carrinho from "../views/Carrinho.vue"
 
 const routes = [
-    { path : "/", component: Login},
+    { path : "/", component: TodosProdutos},
     { path : "/Cadastro", component: Cadastro},
 
-    { path : "/TodosProdutos", component: TodosProdutos, meta: { requiresAuth: true }},
+    { path : "/login", component: Login},
     { path : "/Dashboard", component: Dashboard, meta: { requiresAuth: true }},
-    { path: '/produto/:id', component: ProdutoDetalhes, props: true, meta: { requiresAuth: true }},
-    { path : "/Carrinho", component: Carrinho, meta: { requiresAuth: true }},
+    { path: '/produto/:id', component: ProdutoDetalhes, props: true},
+    { path : "/Carrinho", component: Carrinho},
 ]
 
 const router = createRouter({
@@ -29,10 +29,6 @@ const router = createRouter({
 
         if (to.meta?.requiresAuth && !loggedIn) {
             return { path: "/", query: { redirect: to.fullPath}}
-        }
-
-        if (!to.meta?.requiresAuth && loggedIn && (to.path === "/" || to.path === "/Cadastro")) {
-            return { path: "/TodosProdutos"}
         }
     })
 export default router
