@@ -220,8 +220,9 @@ export default {
           `http://localhost:3000/produtos/predicao/${this.produto.product_id}`
         );
         const rawString = resultado.data;
-        const parsed = JSON.parse(rawString); // transforma a string em objeto
-        this.predicoes = parsed.data.slice(0, 8);
+        console.log(rawString);
+        this.predicoes = rawString.data.slice(0, 8);
+        console.log(this.predicoes);
 
         console.log(this.predicoes);
       } catch (error) {
