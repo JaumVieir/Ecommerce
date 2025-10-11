@@ -1,3 +1,45 @@
+<script>
+import axios from 'axios';
+export default {
+  data() {
+    return {
+      email: '',
+      password: ''
+    }
+  },
+  methods: {
+    async handleLogin() {
+      // Aqui você pode integrar com API ou Firebase
+      try {
+          const resp = await axios.post("http://localhost:3000/usuariosEcommerce/login", 
+          { email:this.email, senha: this.password },
+          {headers: { "Content-Type": "application/json"}}
+      )
+      
+        const data = resp.data ?? {};
+
+        const userId = data?.id ? String(data.id) : '';
+
+        if (!userId) {
+          throw new Error("Servidor não retornou ID"); 
+        }
+
+        localStorage.setItem("auth", JSON.stringify({ userId, token: null}))
+
+        alert("Login realizado com sucesso!")
+
+        const redirect = this.$route.query.redirect || "/TodosProdutos"; 
+        this.$router.push(redirect)
+
+  } catch (error) {
+      console.error("[login] erro: ", error?.response?.status, error?.response?.data || error?.message);
+      alert("Falha no login. Verifique suas credenciais.");
+  }
+}
+}
+}
+</script>
+
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-100 font-sans">
     <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
@@ -44,35 +86,6 @@
   </div>
 </template>
 
-<script>
-import axios from 'axios';
-export default {
-  data() {
-    return {
-      email: '',
-      password: ''
-    }
-  },
-  methods: {
-    handleLogin() {
-      // Aqui você pode integrar com API ou Firebase
-      try {
-          axios.post('http://localhost:3000/usuariosecommerce/login', {
-          email: this.email,
-          senha: this.password
-        }).then(response => {
-          console.log('Login bem-sucedido:', response.data)
-        alert('Login realizado com sucesso!');
-        this.$router.push('/TodosProdutos');
-      });
-      } catch (error) {
-        console.error('Erro no login:', error);
-        alert('Falha no login. Verifique suas credenciais.');
-      } 
-    }
-  }
-}
-</script>
 
 <style scoped>
 .font-sans {

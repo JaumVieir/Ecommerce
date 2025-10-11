@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory} from "vue-router"
+import { getAuth } from "../services/auth.js"
 
 import Dashboard from "../views/Dashboard.vue"
 import TodosProdutos from "../views/TodosProdutos.vue"
@@ -8,12 +9,13 @@ import ProdutoDetalhes from '../views/ProdutoDetalhes.vue';
 import Carrinho from "../views/Carrinho.vue"
 
 const routes = [
-    { path : "/", component: Dashboard},
-    { path : "/TodosProdutos", component: TodosProdutos},
-    { path : "/Login", component: Login},
+    { path : "/", component: Login},
     { path : "/Cadastro", component: Cadastro},
-    { path: '/produto/:id', component: ProdutoDetalhes, props: true },
-    { path : "/Carrinho", component: Carrinho},
+
+    { path : "/TodosProdutos", component: TodosProdutos, meta: { requiresAuth: true }},
+    { path : "/Dashboard", component: Dashboard, meta: { requiresAuth: true }},
+    { path: '/produto/:id', component: ProdutoDetalhes, props: true, meta: { requiresAuth: true }},
+    { path : "/Carrinho", component: Carrinho, meta: { requiresAuth: true }},
 ]
 
 const router = createRouter({
@@ -21,4 +23,16 @@ const router = createRouter({
     routes,
 })
 
+    router.beforeEach((to) => {
+        const {userId} = getAuth();
+        const loggedIn = !!userId;
+
+        if (to.meta?.requiresAuth && !loggedIn) {
+            return { path: "/", query: { redirect: to.fullPath}}
+        }
+
+        if (!to.meta?.requiresAuth && loggedIn && (to.path === "/" || to.path === "/Cadastro")) {
+            return { path: "/TodosProdutos"}
+        }
+    })
 export default router
