@@ -25,7 +25,7 @@ def recomendacao_conte_val(payload: dict, top_n=10) -> dict:
     if produto_id is None:
         return json.dumps({"ok": False, "error": "ID vazio"}, ensure_ascii=False)
 
-    df = pd.read_csv("C:/Users/User/Projetos/Ecommerce/Backend/BD/Recomendacao/produtos3.csv")
+    df = pd.read_csv("C:/Users/Bitlab/Desktop/Ecommerce/Backend/BD/Recomendacao/produtos3.csv")
     df = df.dropna()
 
     df["product_name"] = df["product_name"].apply(limpa_texto)
