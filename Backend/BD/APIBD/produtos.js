@@ -50,18 +50,12 @@ export async function getCliqueProdutosByUsuario(id) {
 
 export async function getProdutosCompraByUsuario(id) {
   const [constProdutosComprados] = await pool.query(`SELECT DISTINCT p.product_id FROM usuarios u JOIN vendas v ON u.id = v.id_usuario JOIN itensvendas iv ON v.id = iv.id_venda JOIN produtos p ON iv.id_produto = p.id WHERE u.id = ${Number(id)};`,[Number(id)]);
+  console.log("constProdutosComprados", constProdutosComprados);
   return constProdutosComprados ?? [];
 }
 
-export function embaralharArray(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1)); // índice aleatório
-    [array[i], array[j]] = [array[j], array[i]];   // troca os elementos
-  }
-  return array;
-}
 
-async function processaListProdutos(cliques, idUser) {
+function processaListProdutos(cliques) {
   const agora = Date.now();
   const limite = agora - 2 * 24 * 60 * 60 * 1000;
 
@@ -72,6 +66,8 @@ async function processaListProdutos(cliques, idUser) {
       return new Date(y, m - 1, d).getTime();
     }
 
+    getProdutosCompraByUsuario(10);
+
     if (/^\d{2}-\d{2}-\d{4}$/.test(data)) {
       const [d, m, y] = data.split("-").map(Number);
       return new Date(y, m - 1, d).getTime();
@@ -79,19 +75,26 @@ async function processaListProdutos(cliques, idUser) {
     return new Date(data).getTime();
   };
 
+  const acima7dias = cliques
+    .map((it) => ({ it, ts: toTs(it.data) }))
+    .filter(({ ts }) => Number.isFinite(ts) && ts < limite)
+    .map(({ it }) => it.product_id);
+
   const abaixo7dias = cliques
     .flat()
     .map((it) => ({ it, ts: toTs(it.data) }))
     .filter(({ ts }) => Number.isFinite(ts) && ts >= limite)
     .map(({ it }) => it.product_id);
 
+  const escolhidoAcima = acima7dias.length
+    ? acima7dias[Math.floor(Math.random() * acima7dias.length)]
+    : null;
 
   const escolhidoAbaixo = abaixo7dias.length
     ? abaixo7dias[Math.floor(Math.random() * abaixo7dias.length)]
     : null;
-    const compras  = await getProdutosCompraByUsuario(idUser);
-  console.log(escolhidoAbaixo)
-  return { "Recente": escolhidoAbaixo};
+
+  return { "Recente": escolhidoAbaixo, "Pesquisou": escolhidoAcima };
 }
 
 router.get("/predicaoByClique/:idUsuario", async (req, res) => {
@@ -99,7 +102,7 @@ router.get("/predicaoByClique/:idUsuario", async (req, res) => {
     const { idUsuario } = req.params;
 
     const listaClique = await getCliqueProdutosByUsuario(idUsuario);
-    return res.json(processaListProdutos(listaClique, idUsuario));
+    return res.json(processaListProdutos(listaClique));
   } catch (e) {
     res.status(500).json({
       ok: false,

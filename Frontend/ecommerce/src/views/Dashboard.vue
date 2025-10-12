@@ -26,7 +26,6 @@ export default {
         this.compras = [];
         return;
       }
-      console.log("userId", userId);
       axios.get(`http://localhost:3000/vendas/getVendasById/${userId}`)
       .then((response) => {
   
@@ -43,7 +42,7 @@ export default {
           console.log("produtosCliques", produtosCliques);
           if (produtosCliques != null){
             console.log("produtosCliques.Recente", produtosCliques.Recente);
-            if (produtosCliques.Recente != null) {
+             if (produtosCliques.Recente != null) {
            
               const recente = produtosCliques.Recente;
          
@@ -54,11 +53,12 @@ export default {
                 console.error("Erro ao buscar produtos recentes:", error);
               });
             }
-            
           }
         }).catch((error) => {
           console.error("Erro ao buscar produtos recomendados:", error);
         });
+
+       
         
       }).catch((error) => {
         console.error("Erro ao buscar compras:", error);

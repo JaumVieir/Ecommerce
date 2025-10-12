@@ -216,10 +216,12 @@ export default {
         const produtosArray = response.data[0];
       
         this.produto = produtosArray.find((p) => p.product_id == this.$route.params.id);
-     
+
+        console.log("Produto carregado:", this.produto);
         const resultado = await axios.get(
           `http://localhost:3000/produtos/predicao/${this.produto.product_id}`
         );
+        console.log("Predições recebidas:", resultado.data);
         const rawString = resultado.data;
         const parsed = rawString.data; 
         this.predicoes = parsed.slice(0, 8);
