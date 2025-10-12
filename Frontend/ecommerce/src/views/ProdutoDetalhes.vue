@@ -8,7 +8,7 @@
         </div>
         <div class="hidden md:flex items-center space-x-8">
           <router-link
-            to="/"
+            to="/TodosProdutos"
             class="text-primary-600 hover:text-primary-700 transition duration-300"
             style="text-decoration: none !important"
           >
@@ -28,18 +28,10 @@
             </router-link>
             <button
               class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
-              style="text-decoration: none !important"
-              @click="irParaDashboardOuLogin"
             >
               <span class="material-symbols-outlined text-primary-600"
                 >person</span
               >
-            </button>
-            <button
-              class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
-              @click="logout"
-            >
-              <span class="material-symbols-outlined text-red-600">logout</span>
             </button>
           </div>
         </div>
@@ -99,13 +91,11 @@
         <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:gap-4">
           <button
             class="w-full sm:w-auto px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
-            @click="addAoCarrinho"
           >
             Adicionar ao carrinho
           </button>
           <button
             class="w-full sm:w-auto px-6 py-3 border border-primary-600 text-primary-600 rounded-lg hover:bg-primary-50 transition"
-            @click="comprarAgora"
           >
             Comprar agora
           </button>
@@ -201,21 +191,10 @@
       </div>
     </div>
   </div>
-  <!-- Toast simples -->
-  <div
-    v-if="toastVisible"
-    class="fixed top-4 right-4 z-50 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg"
-    role="status"
-    aria-live="polite"
-  >
-    {{ toastMessage }}
-  </div>
-
 </template>
 
 <script>
 import axios from "axios";
-import { getAuth } from "../services/auth.js";
 
 export default {
   data() {
@@ -223,10 +202,6 @@ export default {
       produto: null,
       predicoes: [],
       pesquisar: "",
-      // Toast simples para feedback de adição ao carrinho
-      toastVisible: false,
-      toastMessage: "",
-      toastTimer: null,
     };
   },
   mounted() {
@@ -237,19 +212,18 @@ export default {
     async getProduto() {
       try {
         const response = await axios.get(`http://localhost:3000/produtos`);
-        // response.data[0] é o array de produtos
+    
         const produtosArray = response.data[0];
-        // Filtra pelo id da rota
-        this.produto = produtosArray.find((p) => p.id == this.$route.params.id);
+      
+        this.produto = produtosArray.find((p) => p.product_id == this.$route.params.id);
+     
         const resultado = await axios.get(
           `http://localhost:3000/produtos/predicao/${this.produto.product_id}`
         );
         const rawString = resultado.data;
-        console.log(rawString);
-        this.predicoes = rawString.data.slice(0, 8);
-        console.log(this.predicoes);
+        const parsed = rawString.data; 
+        this.predicoes = parsed.slice(0, 8);
 
-        console.log(this.predicoes);
       } catch (error) {
         console.error(error);
         alert("Erro ao carregar produto.");
@@ -263,56 +237,6 @@ export default {
         style: "currency",
         currency: "BRL",
       });
-    },
-    addAoCarrinho() {
-      try {
-        if (!this.produto) return;
-        const carrinhoStr = localStorage.getItem("carrinho");
-        const carrinho = carrinhoStr ? JSON.parse(carrinhoStr) : [];
-        const existente = carrinho.find((p) => p.id == this.produto.id);
-        if (existente) {
-          existente.quantidade = (Number(existente.quantidade) || 1) + 1;
-        } else {
-          const item = {
-            id: this.produto.id,
-            product_name: this.produto.product_name,
-            img_link: this.produto.img_link,
-            actual_price: this.produto.actual_price,
-            quantidade: 1,
-          };
-          carrinho.push(item);
-        }
-        localStorage.setItem("carrinho", JSON.stringify(carrinho));
-        this.openToast("Produto adicionado ao carrinho");
-      } catch (e) {
-        console.error(e);
-        this.openToast("Não foi possível adicionar ao carrinho");
-      }
-    },
-    comprarAgora() {
-      this.addAoCarrinho();
-      this.$router.push({ path: "/Carrinho" });
-    },
-    irParaDashboardOuLogin() {
-      const { userId } = getAuth();
-      if (userId) {
-        this.$router.push({ path: "/Dashboard" });
-      } else {
-        this.$router.push({ path: "/login" });
-      }
-    },
-    logout() {
-      localStorage.removeItem("auth");
-      this.$router.push({ path: "/login" });
-    },
-    openToast(msg) {
-      this.toastMessage = msg;
-      this.toastVisible = true;
-      if (this.toastTimer) clearTimeout(this.toastTimer);
-      this.toastTimer = setTimeout(() => {
-        this.toastVisible = false;
-        this.toastTimer = null;
-      }, 2000);
     },
   },
 };

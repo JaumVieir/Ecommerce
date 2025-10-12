@@ -1,6 +1,7 @@
 <script>
 import Detalhes from "../components/Detalhes.vue";
 import { getAuth } from "../services/auth.js";
+import axios from "axios";
 
 export default {
   components: {
@@ -11,70 +12,63 @@ export default {
       modalDetalhes: false,
       compraSelecionada: null,
       compras: [],
+      produtosRecentes: [],
+      produtosRecomendados: [],
     };
   },
   mounted() {
     try {
+
+      
       const { userId } = getAuth();
       if (!userId) {
         // Sem usuário logado, não exibe compras pessoais
         this.compras = [];
         return;
       }
-
-      const keyUser = `compras:${userId}`;
-      const keyGlobalLegacy = "compras"; // legado global
-      const keyAnon = "compras:anon"; // compras feitas antes do login
-
-      // Migração simples: se ainda existir a chave global, move para a chave do usuário
-      const legacy = JSON.parse(localStorage.getItem(keyGlobalLegacy) || "null");
-      if (Array.isArray(legacy) && legacy.length) {
-        const existentesUser = JSON.parse(localStorage.getItem(keyUser) || "[]");
-        const mergeLegacy = [...legacy, ...existentesUser];
-        // de-dupe por id, mantendo o primeiro (mais antigo ou mais recente?) aqui manteremos o mais recente por estar primeiro
-        const vistos = new Set();
-        const dedup = mergeLegacy.filter((c) => {
-          if (!c || typeof c !== "object") return false;
-          const id = c.id ?? Math.random();
-          if (vistos.has(id)) return false;
-          vistos.add(id);
-          return true;
-        });
-        localStorage.setItem(keyUser, JSON.stringify(dedup));
-        localStorage.removeItem(keyGlobalLegacy);
-      }
-
-      // Migra também compras anônimas desse dispositivo para o usuário após login
-      const anonList = JSON.parse(localStorage.getItem(keyAnon) || "null");
-      if (Array.isArray(anonList) && anonList.length) {
-        const existentesUser = JSON.parse(localStorage.getItem(keyUser) || "[]");
-        const mergeAnon = [...anonList, ...existentesUser];
-        const vistos2 = new Set();
-        const dedup2 = mergeAnon.filter((c) => {
-          if (!c || typeof c !== "object") return false;
-          const id = c.id ?? Math.random();
-          if (vistos2.has(id)) return false;
-          vistos2.add(id);
-          return true;
-        });
-        localStorage.setItem(keyUser, JSON.stringify(dedup2));
-        localStorage.removeItem(keyAnon);
-      }
-
-      const comprasSalvasUser = JSON.parse(localStorage.getItem(keyUser) || "[]");
-      // Garante estrutura mínima
-      this.compras = Array.isArray(comprasSalvasUser)
-        ? comprasSalvasUser.map((c) => ({
+      console.log("userId", userId);
+      axios.get(`http://localhost:3000/vendas/getVendasById/${userId}`)
+      .then((response) => {
+  
+          this.compras =  response.data.map((c) => ({
             id: c.id ?? Date.now(),
             data: c.data ?? new Date().toLocaleDateString("pt-BR"),
             valorTotal: Number(c.valorTotal) || 0,
-            itens: Array.isArray(c.itens) ? c.itens : [],
-          }))
-        : [];
-    } catch (e) {
-      console.error(e);
-      this.compras = [];
+            itens: Array.isArray(c.produtos) ? c.produtos : [],
+          }));
+        
+        axios.get(`http://localhost:3000/produtos/predicaoByClique/${userId}`)
+        .then((res) => {
+          const produtosCliques = res.data || [];
+          console.log("produtosCliques", produtosCliques);
+          if (produtosCliques != null){
+            console.log("produtosCliques.Recente", produtosCliques.Recente);
+            if (produtosCliques.Recente != null) {
+           
+              const recente = produtosCliques.Recente;
+         
+              axios.get(`http://localhost:3000/produtos/predicao/${recente}`).then((res) => {
+                console.log(res.data);
+                this.produtosRecentes = res.data.data.length > 0 ? res.data.data.slice(0,4) : [];
+              }).catch((error) => {
+                console.error("Erro ao buscar produtos recentes:", error);
+              });
+            }
+            
+          }
+        }).catch((error) => {
+          console.error("Erro ao buscar produtos recomendados:", error);
+        });
+        
+      }).catch((error) => {
+        console.error("Erro ao buscar compras:", error);
+        this.compras = [];
+      });
+    } catch (error) {
+      console.error("Erro ao buscar compras:", error);      
     }
+
+
   },
   methods: {
     verDetalhesCompra(compra) {
@@ -207,18 +201,18 @@ export default {
       <div class="pt-4 pb-12 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="flex justify-between items-center mb-8">
-            <h2 class="text-3xl font-bold">Baseado em Pesquisas Recentes</h2>
+            <h2 class="text-3xl font-bold">Baseado em Acessos Recentes</h2>
             <div class="flex space-x-2"></div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <div
-              class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
+              v-for="produto in produtosRecentes" :key="produto.id" class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
             >
               <div
                 class="relative relative w-full h-32 bg-white flex items-center justify-center overflow-hidden mt-5"
               >
                 <img
-                  src="https://images.unsplash.com/photo-1583846783214-7229a91b20ed?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+                  :src="produto.img_link "
                   alt="Summer Floral Dress"
                   class="object-contain h-full max-w-full"
                   keywords="Summer Floral Dress, fashion product, ecommerce"
@@ -266,10 +260,10 @@ export default {
                 <h3
                   class="font-medium text-lg mb-2 hover:text-primary-600 transition duration-300"
                 >
-                  Summer Floral Dress
+                  {{produto.product_name}}
                 </h3>
                 <div class="flex items-center justify-between">
-                  <div><span class="font-bold">$59.99</span></div>
+                  <div><span class="font-bold">{{produto.actual_price}}</span></div>
                   <button
                     class="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition duration-300"
                   >

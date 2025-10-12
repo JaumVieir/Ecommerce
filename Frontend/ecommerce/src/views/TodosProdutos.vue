@@ -77,6 +77,15 @@ export default {
     },
   },
   methods: {
+    formataData(){
+      const data = new Date();
+      
+      const dia = String(data.getDate()).padStart(2, '0');
+      const mes = String(data.getMonth() + 1).padStart(2, '0'); 
+      const ano = data.getFullYear();
+      const dataFormatada = `${dia}-${mes}-${ano}`;
+      return dataFormatada;
+    },
     irParaDashboardOuLogin() {
       const { userId } = getAuth();
       if (userId) {
@@ -89,16 +98,17 @@ export default {
       try {
         const carrinhoStr = localStorage.getItem("carrinho");
         const carrinho = carrinhoStr ? JSON.parse(carrinhoStr) : [];
-        const existente = carrinho.find((p) => p.id == produto.id);
+        const existente = carrinho.find((p) => p.id == produto.product_id);
         if (existente) {
           existente.quantidade = (Number(existente.quantidade) || 1) + 1;
         } else {
+         
           const item = {
-            id: produto.id,
+            product_id: produto.product_id,
             product_name: produto.product_name,
             img_link: produto.img_link,
             actual_price: produto.actual_price,
-            quantidade: 1,
+            qtd: 1,
           };
           carrinho.push(item);
         }
@@ -154,9 +164,9 @@ export default {
         const response = await axios.get(
           `http://localhost:3000/produtos/getByCategoria`
         );
-        console.log(response.data);
+  
         this.categorias = response.data.map((cat) => cat.category);
-        console.log(this.categorias);
+       
       } catch (e) {
         console.error(e);
       }
@@ -170,9 +180,28 @@ export default {
         alert("Erro ao carregar produtos. Tente novamente.");
       }
     },
-    verDetalhes(id) {
-      // Navega para a página de detalhes com o id
-      this.$router.push({ path: `/produto/${id}` });
+    async verDetalhes(produto) {
+     
+      const id = produto.product_id;
+      
+      const { userId } = getAuth();
+      
+      const cliques = {
+        usuario: userId,
+        clique: [{
+          product_id: id,
+          product_name: produto.product_name,
+          data: this.formataData()
+        }]};
+ 
+      try {
+        const resposta = await axios.post(`http://localhost:3000/usuarios/setClique`, cliques);
+        this.$router.push({ path: `/produto/${id}` });
+  
+      } catch (error) {
+        console.error("Erro ao registrar clique:", error);
+    }
+      
     },
     formataPreco(valor) {
       if (!valor) return "R$ 0,00";
@@ -344,7 +373,7 @@ export default {
                 </div>
                 <h3
                   class="font-medium text-base mb-1 hover:text-primary-600 transition duration-300 text-truncate cursor-pointer"
-                  @click="verDetalhes(produto.id)"
+                  @click="verDetalhes(produto)"
                 >
                   {{ produto.product_name }}
                 </h3>

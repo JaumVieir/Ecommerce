@@ -16,12 +16,12 @@ router.post("/", async (req, res) => {
 
 router.post("/setClique", async (req, res) => {
     try {
-        const id = req.body?.usuario;
+        const id = Number(req.body?.usuario);
         const clique = req.body?.clique;
-
+        
         const cliques = await getDB().collection('Usuarios').updateOne(
           {id},
-          { $push: { "cliqueProduto.0": { $each: cliques } } }
+          { $push: { "cliqueProduto": { $each: clique } } }
         );
         res.json({"Mensagem":"Sucesso!"})
     } catch (err) {

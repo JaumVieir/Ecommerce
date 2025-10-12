@@ -6,8 +6,8 @@
       <ul class="mt-4 mb-4 space-y-2">
         <li v-for="item in compra.itens" :key="item.id" class="flex items-center gap-4 p-2 bg-gray-50 rounded">
           <img :src="item.img_link" alt="imagem" class="w-12 h-12 object-contain rounded border" />
-          <span class="font-medium">{{ item.nome }}</span>
-          <span class="ml-auto font-bold">{{ formatarPreco(item.preco) }}</span>
+          <span class="font-medium">{{ item.product_name }}</span>
+          <span class="ml-auto font-bold">{{ formatarPreco(item.actual_price) }}</span>
         </li>
       </ul>
       <div class="flex justify-between items-center mt-4">

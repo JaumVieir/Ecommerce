@@ -5,12 +5,12 @@ import { text } from "stream/consumers";
 
 const router = express.Router();
 
-router.get("/getByCategoria", async (req, res) =>{
-  try{
+router.get("/getByCategoria", async (req, res) => {
+  try {
     const [categoria] = await pool.query(`SELECT  DISTINCT category FROM produtos ORDER BY category`);
     res.json(categoria);
-  }catch(e){
-    res.status(500).json({ error : "Erro ao buscar produtos"});
+  } catch (e) {
+    res.status(500).json({ error: "Erro ao buscar produtos" });
   }
 });
 
@@ -42,13 +42,26 @@ router.get("/", async (req, res) => {
 
 export async function getCliqueProdutosByUsuario(id) {
   const usuario = await getDB().collection("Usuarios").findOne(
-    { "id": String(id) },
+    { "id": Number(id) },
     { projection: { _id: 0, cliqueProduto: 1 } },
   );
   return usuario?.cliqueProduto ?? [];
 }
 
-function processaListProdutos(cliques) {
+export async function getProdutosCompraByUsuario(id) {
+  const [constProdutosComprados] = await pool.query(`SELECT DISTINCT p.product_id FROM usuarios u JOIN vendas v ON u.id = v.id_usuario JOIN itensvendas iv ON v.id = iv.id_venda JOIN produtos p ON iv.id_produto = p.id WHERE u.id = ${Number(id)};`,[Number(id)]);
+  return constProdutosComprados ?? [];
+}
+
+export function embaralharArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1)); // índice aleatório
+    [array[i], array[j]] = [array[j], array[i]];   // troca os elementos
+  }
+  return array;
+}
+
+async function processaListProdutos(cliques, idUser) {
   const agora = Date.now();
   const limite = agora - 2 * 24 * 60 * 60 * 1000;
 
@@ -58,6 +71,7 @@ function processaListProdutos(cliques) {
       const [y, m, d] = data.split("-").map(Number);
       return new Date(y, m - 1, d).getTime();
     }
+
     if (/^\d{2}-\d{2}-\d{4}$/.test(data)) {
       const [d, m, y] = data.split("-").map(Number);
       return new Date(y, m - 1, d).getTime();
@@ -65,28 +79,19 @@ function processaListProdutos(cliques) {
     return new Date(data).getTime();
   };
 
-  const acima7dias = cliques
-    .map((it) => ({ it, ts: toTs(it.data) }))
-    .filter(({ ts }) => Number.isFinite(ts) && ts < limite)
-    .map(({ it }) => it.product_id);
-
   const abaixo7dias = cliques
     .flat()
     .map((it) => ({ it, ts: toTs(it.data) }))
     .filter(({ ts }) => Number.isFinite(ts) && ts >= limite)
     .map(({ it }) => it.product_id);
-  console.log(abaixo7dias);
-  console.log(acima7dias);
 
-  const escolhidoAcima = acima7dias.length
-    ? acima7dias[Math.floor(Math.random() * acima7dias.length)]
-    : null;
 
   const escolhidoAbaixo = abaixo7dias.length
     ? abaixo7dias[Math.floor(Math.random() * abaixo7dias.length)]
     : null;
-
-  return { "Recente": escolhidoAbaixo, "Pesquisou": escolhidoAcima };
+    const compras  = await getProdutosCompraByUsuario(idUser);
+  console.log(escolhidoAbaixo)
+  return { "Recente": escolhidoAbaixo};
 }
 
 router.get("/predicaoByClique/:idUsuario", async (req, res) => {
@@ -94,8 +99,7 @@ router.get("/predicaoByClique/:idUsuario", async (req, res) => {
     const { idUsuario } = req.params;
 
     const listaClique = await getCliqueProdutosByUsuario(idUsuario);
-
-    return res.json(processaListProdutos(listaClique[0]));
+    return res.json(processaListProdutos(listaClique, idUsuario));
   } catch (e) {
     res.status(500).json({
       ok: false,
@@ -111,7 +115,7 @@ router.get("/predicao/:id", async (req, res) => {
     const input = JSON.stringify({ id });
 
     const arquivo = spawn("python", [
-      "C:/Users/User/Projetos/Ecommerce/Backend/BD/Recomendacao/Recomendacao.py",
+      "C:/Users/Bitlab/Desktop/Ecommerce/Backend/BD/Recomendacao/Recomendacao.py",
     ]);
 
     let respostas = "";

@@ -2,6 +2,7 @@
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { getAuth } from "../services/auth.js";
+import axios from "axios";
 
 export default {
   data() {
@@ -83,20 +84,57 @@ export default {
             (typeof p.actual_price === "string"
               ? parseFloat(p.actual_price.replace(",", "."))
               : Number(p.actual_price)) || 0;
-          const quantidade = Number(p.quantidade) || 1;
+          const qtd = Number(p.quantidade) || 1;
           return {
-            id: p.id,
+            product_id: p.product_id,
             nome: p.product_name ?? p.nome ?? "Produto",
             preco,
             img_link: p.img_link,
-            quantidade,
+            qtd,
           };
         });
+
+        const listaProdutos =this.carrinho.map((p) => ({
+          product_id: p.product_id,
+          actual_price:
+            (typeof p.actual_price === "string"
+              ? parseFloat(p.actual_price.replace(",", "."))
+              : Number(p.actual_price)) || 0,
+          qtd: Number(p.quantidade) || 1,
+        }));
+
+       
 
         const valorTotal = itens.reduce(
           (acc, it) => acc + it.preco * (Number(it.quantidade) || 1),
           0
         );
+   
+        
+         const jsonProdutos = `{
+        "idUsuario": ${userId},
+        "precoTotal": ${valorTotal},
+        "produtos": [
+          ${listaProdutos
+            .map(
+              (p) => `
+            {
+              "product_id": "${p.product_id}",
+              "actual_price": ${p.actual_price},
+              "qtd": ${p.qtd}
+            }
+          `
+            )
+            .join(",")}
+        ]}`;
+
+       axios.post("http://localhost:3000/vendas", JSON.parse(jsonProdutos)).then((response) => {
+
+          console.log("Compra registrada com sucesso:", response.data);
+
+        }).catch((error) => {
+          console.error("Erro ao registrar compra:", error);
+        });
 
         const agora = new Date();
         const compra = {

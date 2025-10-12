@@ -78,12 +78,11 @@ export default {
           senha: this.password
         })
         .then(response => {
-          console.log('Usuário cadastrado:', response.data[0]);
           axios.post('http://localhost:3000/usuarios', {
             id: response.data[0].id,
             cliquesproduto: []
           }).then(res => {
-            console.log(res.data)
+          
             alert('Conta criada com sucesso!');
             this.$router.push('/login');
           }).catch(err => {
@@ -98,7 +97,7 @@ export default {
         console.error('Erro na requisição:', error);
         alert('Erro ao criar conta. Tente novamente.');
       }
-      console.log('Cadastro:', this.name, this.email, this.password);
+ 
       alert('Conta criada com sucesso!');
       this.$router.push('/login');
     }
