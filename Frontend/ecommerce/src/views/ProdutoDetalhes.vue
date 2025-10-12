@@ -8,7 +8,7 @@
         </div>
         <div class="hidden md:flex items-center space-x-8">
           <router-link
-            to="/TodosProdutos"
+            to="/"
             class="text-primary-600 hover:text-primary-700 transition duration-300"
             style="text-decoration: none !important"
           >
