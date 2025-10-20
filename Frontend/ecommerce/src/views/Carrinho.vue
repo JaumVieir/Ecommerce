@@ -8,6 +8,9 @@ export default {
   data() {
     return {
       carrinho: [], // Array de produtos no carrinho
+      toastVisible: false,
+      toastMessage: "",
+      toastTimer: null,
     };
   },
   computed: {
@@ -63,7 +66,7 @@ export default {
     finalizarCompra() {
       try {
         if (!this.carrinho || this.carrinho.length === 0) {
-          alert("Seu carrinho está vazio.");
+          this.openToast("Seu carrinho está vazio.");
           return;
         }
 
@@ -72,7 +75,7 @@ export default {
         if (!userId) {
           // Usuário não logado: não cria compra, apenas mantém o carrinho salvo e redireciona para login
           localStorage.setItem("carrinho", JSON.stringify(this.carrinho));
-          alert("Você precisa fazer login para finalizar a compra.");
+            this.openToast("Você precisa fazer login para finalizar a compra.");
           // Inclui um redirect para voltar ao carrinho após o login
           this.$router.push({ path: "/login", query: { redirect: "/Carrinho" } });
           return;
@@ -155,12 +158,20 @@ export default {
         // Limpa carrinho (estado e localStorage) e redireciona
         this.carrinho = [];
         localStorage.removeItem("carrinho");
-        alert("Compra finalizada com sucesso!");
-        this.$router.push({ path: "/Dashboard" });
+    this.$router.push({ path: "/Dashboard", query: { toast: "Compra finalizada com sucesso!" } });
       } catch (e) {
         console.error(e);
-        alert("Não foi possível finalizar a compra.");
+        this.openToast("Não foi possível finalizar a compra.");
       }
+    },
+    openToast(msg) {
+      this.toastMessage = msg;
+      this.toastVisible = true;
+      if (this.toastTimer) clearTimeout(this.toastTimer);
+      this.toastTimer = setTimeout(() => {
+        this.toastVisible = false;
+        this.toastTimer = null;
+      }, 2000);
     },
     irParaDashboardOuLogin() {
       const { userId } = getAuth();
@@ -208,17 +219,18 @@ export default {
           <div class="flex items-center">
             <h1 class="text-2xl font-bold text-primary-600">E-Commerce</h1>
           </div>
-          <div class="hidden md:flex items-center space-x-8">
-            <router-link
-              to="/"
-              class="text-primary-600 hover:text-primary-700 transition duration-300"
-              style="text-decoration: none !important"
-            >
-              Todos Produtos
-            </router-link>
-          </div>
+          
           <div class="flex items-center space-x-4">
             <div class="flex items-center gap-2">
+              <router-link
+                to="/"
+                class="p-2 rounded-full hover:bg-gray-100 transition duration-300 relative flex items-center"
+                aria-label="Ver produtos"
+                title="Ver produtos"
+                style="text-decoration: none !important"
+              >
+                <span class="material-symbols-outlined text-primary-600">shopping_bag</span>
+              </router-link>
               <button
                 class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
                 style="text-decoration: none !important"
@@ -320,12 +332,21 @@ export default {
         </div>
       </div>
     </main>
-    <footer class="bg-gray-800 text-gray-200 py-12 mt-auto">
+    <footer class="bg-gray-800 text-gray-200 py-4 mt-auto">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div></div>
         </div>
       </div>
     </footer>
+    <!-- Toast simples -->
+    <div
+      v-if="toastVisible"
+      class="fixed top-4 right-4 z-50 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg"
+      role="status"
+      aria-live="polite"
+    >
+      {{ toastMessage }}
+    </div>
   </div>
 </template>

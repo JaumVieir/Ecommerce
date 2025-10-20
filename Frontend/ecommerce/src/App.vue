@@ -3,12 +3,9 @@
 </script>
 
 <template>
-  <div>
-    <div class="container">
-      <router-view />
-    </div>
+  <div class="w-full">
+    <router-view />
   </div>
-
 </template>
 
 <style scoped></style>

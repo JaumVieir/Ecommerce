@@ -77,11 +77,11 @@ export default {
     },
   },
   methods: {
-    formataData(){
+    formataData() {
       const data = new Date();
-      
-      const dia = String(data.getDate()).padStart(2, '0');
-      const mes = String(data.getMonth() + 1).padStart(2, '0'); 
+
+      const dia = String(data.getDate()).padStart(2, "0");
+      const mes = String(data.getMonth() + 1).padStart(2, "0");
       const ano = data.getFullYear();
       const dataFormatada = `${dia}-${mes}-${ano}`;
       return dataFormatada;
@@ -94,15 +94,35 @@ export default {
         this.$router.push({ path: "/login" });
       }
     },
-    addAoCarrinho(produto) {
+    async addAoCarrinho(produto) {
       try {
+        const { userId } = getAuth();
+        console.log("User ID:", userId);
+        const cliques = {
+          usuario: userId,
+          clique: [
+            {
+              product_id: produto.product_id,
+              product_name: produto.product_name,
+              data: this.formataData(),
+            },
+          ],
+        };
+        console.log(cliques);
+        try {
+          const resposta = await axios.post(
+            `http://localhost:3000/usuarios/setClique`,
+            cliques
+          );
+        } catch (error) {
+          console.error("Erro ao registrar clique:", error);
+        }
         const carrinhoStr = localStorage.getItem("carrinho");
         const carrinho = carrinhoStr ? JSON.parse(carrinhoStr) : [];
         const existente = carrinho.find((p) => p.id == produto.product_id);
         if (existente) {
           existente.quantidade = (Number(existente.quantidade) || 1) + 1;
         } else {
-         
           const item = {
             product_id: produto.product_id,
             product_name: produto.product_name,
@@ -164,9 +184,8 @@ export default {
         const response = await axios.get(
           `http://localhost:3000/produtos/getByCategoria`
         );
-  
+
         this.categorias = response.data.map((cat) => cat.category);
-       
       } catch (e) {
         console.error(e);
       }
@@ -181,27 +200,30 @@ export default {
       }
     },
     async verDetalhes(produto) {
-     
       const id = produto.product_id;
-      
+
       const { userId } = getAuth();
-      
+
       const cliques = {
         usuario: userId,
-        clique: [{
-          product_id: id,
-          product_name: produto.product_name,
-          data: this.formataData()
-        }]};
- 
+        clique: [
+          {
+            product_id: id,
+            product_name: produto.product_name,
+            data: this.formataData(),
+          },
+        ],
+      };
+
       try {
-        const resposta = await axios.post(`http://localhost:3000/usuarios/setClique`, cliques);
+        const resposta = await axios.post(
+          `http://localhost:3000/usuarios/setClique`,
+          cliques
+        );
         this.$router.push({ path: `/produto/${id}` });
-  
       } catch (error) {
         console.error("Erro ao registrar clique:", error);
-    }
-      
+      }
     },
     formataPreco(valor) {
       if (!valor) return "R$ 0,00";
@@ -222,16 +244,15 @@ export default {
 </script>
 
 <template>
-  <div id="webcrumbs">
-    <div class="min-h-screen bg-gray-50">
-      <header class="bg-white shadow-md sticky top-0 z-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex justify-between items-center py-4">
+  <div id="webcrumbs" class="w-full">
+    <div class="min-h-screen bg-gray-50 w-full">
+      <header class="bg-white shadow-md sticky top-0 z-10 w-full">
+        <div class="w-full px-0">
+          <div class="flex justify-between items-center py-4 px-4">
             <div class="flex items-center">
               <h1 class="text-2xl font-bold text-primary-600">E-Commerce</h1>
             </div>
-            <div class="hidden md:flex items-center space-x-8">
-            </div>
+            <div class="hidden md:flex items-center space-x-8"></div>
             <div class="flex items-center space-x-4">
               <div class="relative">
                 <input
@@ -260,7 +281,9 @@ export default {
                   style="text-decoration: none !important"
                   @click="irParaDashboardOuLogin"
                 >
-                  <span class="material-symbols-outlined text-primary-600">person</span>
+                  <span class="material-symbols-outlined text-primary-600"
+                    >person</span
+                  >
                 </button>
                 <button
                   class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
@@ -277,9 +300,9 @@ export default {
       </header>
 
       <!-- Amostragem de todos os produtos -->
-      <div class="py-16 bg-gray-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex justify-between items-center mb-8">
+      <div class="py-16 bg-gray-50 w-full">
+        <div class="w-full px-0">
+          <div class="flex justify-between items-center mb-8 px-4">
             <h2 class="text-3xl font-bold">Todos os Produtos</h2>
 
             <!--Filtro de Categoria-->
@@ -307,7 +330,7 @@ export default {
               </select>
             </div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4">
             <!-- Primeiro produto -->
             <div
               v-for="produto in produtosPaginação"
@@ -395,7 +418,7 @@ export default {
               </div>
             </div>
           </div>
-          <div class="mt-12 flex justify-center">
+          <div class="mt-12 flex justify-center px-4">
             <div class="flex items-center space-x-2">
               <button
                 class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
@@ -419,9 +442,9 @@ export default {
         </div>
       </div>
 
-      <footer class="bg-gray-800 text-gray-200 py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <footer class="bg-gray-800 text-gray-200 py-4 w-full">
+        <div class="w-full px-0">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 px-4">
             <div></div>
           </div>
         </div>

@@ -4,38 +4,45 @@ export default {
   data() {
     return {
       email: '',
-      password: ''
+      password: '',
+      toastVisible: false,
+      toastMessage: '',
+      toastTimer: null
     }
   },
   methods: {
+    openToast(msg) {
+      this.toastMessage = msg;
+      this.toastVisible = true;
+      if (this.toastTimer) clearTimeout(this.toastTimer);
+      this.toastTimer = setTimeout(() => {
+        this.toastVisible = false;
+        this.toastTimer = null;
+      }, 2000);
+    },
     async handleLogin() {
       // Aqui você pode integrar com API ou Firebase
       try {
-          const resp = await axios.post("http://localhost:3000/usuariosEcommerce/login", 
+        const resp = await axios.post("http://localhost:3000/usuariosEcommerce/login", 
           { email:this.email, senha: this.password },
           {headers: { "Content-Type": "application/json"}}
-      )
-      
+        )
         const data = resp.data ?? {};
-
         const userId = data?.id ? String(data.id) : '';
-
         if (!userId) {
           throw new Error("Servidor não retornou ID"); 
         }
-
         localStorage.setItem("auth", JSON.stringify({ userId, token: null}))
-
-        alert("Login realizado com sucesso!")
-
-        const redirect = this.$route.query.redirect || "/"; 
-        this.$router.push(redirect)
-
-  } catch (error) {
-      console.error("[login] erro: ", error?.response?.status, error?.response?.data || error?.message);
-      alert("Falha no login. Verifique suas credenciais.");
-  }
-}
+        this.openToast("Login realizado com sucesso!");
+        setTimeout(() => {
+          const redirect = this.$route.query.redirect || "/"; 
+          this.$router.push(redirect);
+        }, 2000);
+      } catch (error) {
+        console.error("[login] erro: ", error?.response?.status, error?.response?.data || error?.message);
+        this.openToast("Falha no login. Verifique suas credenciais.");
+      }
+    }
 }
 }
 </script>
@@ -82,6 +89,9 @@ export default {
         Não tem uma conta?
         <router-link to="/cadastro" class="text-primary-600 hover:underline">Criar Conta</router-link>
       </p>
+      <div v-if="toastVisible" class="fixed top-4 right-4 z-50 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg" role="status" aria-live="polite">
+        {{ toastMessage }}
+      </div>
     </div>
   </div>
 </template>
