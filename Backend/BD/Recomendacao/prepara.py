@@ -16,7 +16,7 @@ def limpa_texto(texto):
     texto = ' '.join([word for word in texto.split() if word not in STOP_WORDS])
     return texto
 
-df = pd.read_csv("C:/Users/Bitlab/Desktop/Ecommerce/Backend/BD/Recomendacao/produtos3.1.csv").dropna()
+df = pd.read_csv("C:/Users/vitor/OneDrive/Área de Trabalho/Ecommerce/Backend/BD/Recomendacao/produtos3.1.csv").dropna()
 df["product_name"] = df["product_name"].apply(limpa_texto)
 df["category"] = df["category"].apply(limpa_texto)
 df["actual_price"] = df["actual_price"].astype(str).str.replace("₹", "").str.replace(",", "").astype(float)
@@ -31,16 +31,16 @@ cosine_sim_matrix = cosine_similarity(tfidf_matrix)
 
 print("Salvando arquivos...")
 
-with open("C:/Users/Bitlab/Desktop/Ecommerce/Backend/BD/Recomendacao/vectorizer.pkl", "wb") as f:
+with open("C:/Users/vitor/OneDrive/Área de Trabalho/Ecommerce/Backend/BD/Recomendacao/vectorizer.pkl", "wb") as f:
     pickle.dump(vectorizer, f)
 
-with open("C:/Users/Bitlab/Desktop/Ecommerce/Backend/BD/Recomendacao/tfidf_matrix.pkl", "wb") as f:
+with open("C:/Users/vitor/OneDrive/Área de Trabalho/Ecommerce/Backend/BD/Recomendacao/tfidf_matrix.pkl", "wb") as f:
     pickle.dump(tfidf_matrix, f)
 
-with open("C:/Users/Bitlab/Desktop/Ecommerce/Backend/BD/Recomendacao/cosine_sim_matrix.pkl", "wb") as f:
+with open("C:/Users/vitor/OneDrive/Área de Trabalho/Ecommerce/Backend/BD/Recomendacao/cosine_sim_matrix.pkl", "wb") as f:
     pickle.dump(cosine_sim_matrix, f)
 
-with open("C:/Users/Bitlab/Desktop/Ecommerce/Backend/BD/Recomendacao/produtos_df.pkl", "wb") as f:
+with open("C:/Users/vitor/OneDrive/Área de Trabalho/Ecommerce/Backend/BD/Recomendacao/produtos_df.pkl", "wb") as f:
     pickle.dump(df, f)
 
 print("Pré-processamento finalizado!")

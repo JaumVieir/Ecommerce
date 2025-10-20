@@ -118,7 +118,7 @@ router.get("/predicao/:id", async (req, res) => {
     const input = JSON.stringify({ id });
 
     const arquivo = spawn("python", [
-      "C:/Users/Bitlab/Desktop/Ecommerce/Backend/BD/Recomendacao/Recomendacao.py",
+      "C:/Users/vitor/OneDrive/Área de Trabalho/Ecommerce/Backend/BD/Recomendacao/Recomendacao.py",
     ]);
 
     let respostas = "";

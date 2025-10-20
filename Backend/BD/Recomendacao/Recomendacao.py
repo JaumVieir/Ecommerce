@@ -4,10 +4,10 @@ import sys
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
-with open("C:/Users/Bitlab/Desktop/Ecommerce/Backend/BD/Recomendacao/produtos_df.pkl", "rb") as f:
+with open("C:/Users/vitor/OneDrive/Área de Trabalho/Ecommerce/Backend/BD/Recomendacao/produtos_df.pkl", "rb") as f:
     df = pickle.load(f)
 
-with open("C:/Users/Bitlab/Desktop/Ecommerce/Backend/BD/Recomendacao/cosine_sim_matrix.pkl", "rb") as f:
+with open("C:/Users/vitor/OneDrive/Área de Trabalho/Ecommerce/Backend/BD/Recomendacao/cosine_sim_matrix.pkl", "rb") as f:
     cosine_sim = pickle.load(f)
 
 def recomendacao(produto_id, top_n=10):
