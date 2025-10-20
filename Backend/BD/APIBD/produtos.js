@@ -49,10 +49,21 @@ export async function getCliqueProdutosByUsuario(id) {
 }
 
 export async function getProdutosCompraByUsuario(id) {
-  const [constProdutosComprados] = await pool.query(`SELECT DISTINCT p.product_id FROM usuarios u JOIN vendas v ON u.id = v.id_usuario JOIN itensvendas iv ON v.id = iv.id_venda JOIN produtos p ON iv.id_produto = p.id WHERE u.id = ${Number(id)};`,[Number(id)]);
-  console.log("constProdutosComprados", constProdutosComprados);
-  return constProdutosComprados ?? [];
+  const [produtosComprados] = await pool.query(
+    `
+    SELECT DISTINCT p.product_id, p.product_name
+    FROM usuarios u
+    JOIN vendas v ON u.id = v.id_usuario
+    JOIN itensvendas iv ON v.id = iv.id_venda
+    JOIN produtos p ON iv.id_produto = p.id
+    WHERE u.id = ?;
+    `,
+    [Number(id)] // parâmetro seguro
+  );
+
+  return produtosComprados ?? [];
 }
+
 
 
 function processaListProdutos(cliques) {
@@ -65,8 +76,6 @@ function processaListProdutos(cliques) {
       const [y, m, d] = data.split("-").map(Number);
       return new Date(y, m - 1, d).getTime();
     }
-
-    getProdutosCompraByUsuario(10);
 
     if (/^\d{2}-\d{2}-\d{4}$/.test(data)) {
       const [d, m, y] = data.split("-").map(Number);
@@ -97,6 +106,20 @@ function processaListProdutos(cliques) {
   return { "Recente": escolhidoAbaixo, "Pesquisou": escolhidoAcima };
 }
 
+router.get("/predicaoByCompras/:idUsuario", async(req,res) =>{
+  try {
+    const { idUsuario } = req.params;
+
+    const listaClique = await getProdutosCompraByUsuario(idUsuario);
+    const sorteado = listaClique[Math.floor(Math.random() * listaClique.length)];
+    return res.json(sorteado);
+  } catch (e) {
+    res.status(500).json({
+      ok: false,
+      error: "Erro durante obter a predição by Usuario",
+    });
+  }
+})
 router.get("/predicaoByClique/:idUsuario", async (req, res) => {
   try {
     const { idUsuario } = req.params;

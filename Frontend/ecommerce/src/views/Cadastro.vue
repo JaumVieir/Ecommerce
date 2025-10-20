@@ -80,7 +80,6 @@ export default {
         .then(response => {
           axios.post('http://localhost:3000/usuarios', {
             id: response.data[0].id,
-            cliquesproduto: []
           }).then(res => {
           
             alert('Conta criada com sucesso!');

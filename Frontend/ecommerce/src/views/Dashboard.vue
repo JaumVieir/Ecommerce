@@ -13,7 +13,8 @@ export default {
       compraSelecionada: null,
       compras: [],
       produtosRecentes: [],
-      produtosRecomendados: [],
+      produtosComprados: [],
+      nomeProdutoComprado: 'x'
     };
   },
   mounted() {
@@ -22,7 +23,7 @@ export default {
       
       const { userId } = getAuth();
       if (!userId) {
-        // Sem usuário logado, não exibe compras pessoais
+
         this.compras = [];
         return;
       }
@@ -35,19 +36,34 @@ export default {
             valorTotal: Number(c.valorTotal) || 0,
             itens: Array.isArray(c.produtos) ? c.produtos : [],
           }));
+
+        axios.get(`http://localhost:3000/produtos/predicaoByCompras/${userId}`)
+        .then((res) => {
+          console.log(res.data)
+          const produtosCliques = res.data || [];
+          if (produtosCliques != null){
+             if (produtosCliques.product_id != null) {
+              const recente = produtosCliques.product_id;
+              this.nomeProdutoComprado = produtosCliques.product_name;
+              console.log(recente);
+              axios.get(`http://localhost:3000/produtos/predicao/${recente}`).then((res) => {
+                this.produtosComprados = res.data.data.length > 0 ? res.data.data.slice(0,4) : [];
+              }).catch((error) => {
+                console.error("Erro ao buscar produtos recentes:", error);
+              });
+            }
+          }
+        }).catch((error) => {
+          console.error("Erro ao buscar produtos recomendados:", error);
+        });
         
         axios.get(`http://localhost:3000/produtos/predicaoByClique/${userId}`)
         .then((res) => {
           const produtosCliques = res.data || [];
-          console.log("produtosCliques", produtosCliques);
           if (produtosCliques != null){
-            console.log("produtosCliques.Recente", produtosCliques.Recente);
              if (produtosCliques.Recente != null) {
-           
               const recente = produtosCliques.Recente;
-         
               axios.get(`http://localhost:3000/produtos/predicao/${recente}`).then((res) => {
-                console.log(res.data);
                 this.produtosRecentes = res.data.data.length > 0 ? res.data.data.slice(0,4) : [];
               }).catch((error) => {
                 console.error("Erro ao buscar produtos recentes:", error);
@@ -283,18 +299,19 @@ export default {
       <div class="pt-4 pb-12 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="flex justify-between items-center mb-8">
-            <h2 class="text-3xl font-bold">Baseado na Busca de Produto X</h2>
+            <h2 class="text-3xl font-bold">Baseado na Compra de: <u><i>{{ nomeProdutoComprado.split(" ").slice(0, 2).join(" ") }}</i></u></h2>
             <div class="flex space-x-2"></div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <div
+             v-for="produto in produtosComprados" :key="produto.id"
               class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
             >
               <div
                 class="relative relative w-full h-32 bg-white flex items-center justify-center overflow-hidden mt-5"
               >
                 <img
-                  src="https://images.unsplash.com/photo-1583846783214-7229a91b20ed?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+                  :src="produto.img_link "
                   alt="Summer Floral Dress"
                   class="object-contain h-full max-w-full"
                   keywords="Summer Floral Dress, fashion product, ecommerce"
@@ -342,10 +359,10 @@ export default {
                 <h3
                   class="font-medium text-lg mb-2 hover:text-primary-600 transition duration-300"
                 >
-                  Summer Floral Dress
+                  {{produto.product_name}}
                 </h3>
                 <div class="flex items-center justify-between">
-                  <div><span class="font-bold">$59.99</span></div>
+                  <div><span class="font-bold">{{produto.actual_price}}</span></div>
                   <button
                     class="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition duration-300"
                   >
