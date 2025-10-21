@@ -75,6 +75,7 @@
 
 <script>
 import axios from 'axios';
+import api from '../services/api';
 export default {
   data() {
     return {
@@ -100,7 +101,7 @@ export default {
     async handleRegister() {
       // Aqui você pode integrar com API ou Firebase
       try {
-        const response = await axios.post('http://localhost:3000/usuariosecommerce/cadastro', {
+        const response = await api.post('/usuariosecommerce/cadastro', {
           nome: this.name,
           cpf: this.cpf,
           email: this.email,
