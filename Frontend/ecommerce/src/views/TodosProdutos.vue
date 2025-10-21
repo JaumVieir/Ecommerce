@@ -338,7 +338,7 @@ export default {
               class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
             >
               <div
-                class="relative relative w-full h-32 bg-white flex items-center justify-center overflow-hidden mt-5"
+                class="relative w-full h-32 bg-white flex items-center justify-center overflow-hidden mt-5"
               >
                 <img
                   :src="produto.img_link"
