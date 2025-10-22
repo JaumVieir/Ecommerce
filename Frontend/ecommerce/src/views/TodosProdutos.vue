@@ -110,7 +110,7 @@ export default {
         };
         console.log(cliques);
         try {
-          const resposta = await axios.post(
+          const resposta = await api.post(
             `http://localhost:3000/usuarios/setClique`,
             cliques
           );
