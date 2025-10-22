@@ -3,11 +3,11 @@ import { MongoClient } from "mongodb";
 import "dotenv/config"; // atalaho para importar e chamar a função dotenv.config() automaticamente
 
 export const pool = mysql.createPool({
-  host: "localhost",
+  host: process.env.DB_HOST,
   port: process.env.DB_PORT,
-  user: "root",
+  user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: "faculdade",
+  database: process.env.DB_NAME,
   waitForConnections: true,
   connectionLimit: 10,
   timezone: "Z",
