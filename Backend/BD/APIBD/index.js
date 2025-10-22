@@ -17,7 +17,9 @@ connectDB().then(() => {
   app.use("/usuariosEcommerce", usuariosSQL);
   app.use("/vendas", vendaSQL);
 
-  app.listen(3000, () => console.log("Servidor rodando na porta 3000"))
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+  
 }).catch(err =>{
   console.error("Error ao conectar", err);
 })
