@@ -24,8 +24,7 @@ export default {
     async handleLogin() {
       // Aqui você pode integrar com API ou Firebase
       try {
-        console.log("tentando login com:", this.email, this.password);
-        const resp = api.post("/usuariosEcommerce/login", 
+        const resp = await api.post("/usuariosEcommerce/login", 
           { email:this.email, senha: this.password },
           {headers: { "Content-Type": "application/json"}}
         )
