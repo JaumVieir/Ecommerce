@@ -17,15 +17,7 @@ connectDB().then(() => {
   app.use("/usuariosEcommerce", usuariosSQL);
   app.use("/vendas", vendaSQL);
 
-  app.get("/healthz/db", async (_, res) => {
-  try {
-    const [rows] = await pool.query("SELECT 1 AS ok");
-    res.json(rows[0]);
-  } catch (err) {
-    console.error("Erro DB:", err.message);
-    res.status(500).send("erro ao conectar ao banco");
-  }
-});
+  
 
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
