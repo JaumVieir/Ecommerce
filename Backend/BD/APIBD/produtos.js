@@ -33,7 +33,7 @@ router.get("/getByTexto/:texto", async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     //const produtos = await getDB().collection('ProdutosAmazon').find({}).toArray();
-    const produtos = await pool.query(`Select * from Produtos`);
+    const produtos = await pool.query(`Select * from produtos`);
     console.log(produtos);
     res.json(produtos);
   } catch (err) {
