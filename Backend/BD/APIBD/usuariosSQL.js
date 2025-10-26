@@ -37,6 +37,7 @@ router.post("/login", async (req,res) =>{
     const cmd = `Select * from usuarios WHERE email = ? and senha = ?`;
     const login = await pool.query(cmd, [email,senha]);
 
+    console.log(login);
     return res.json(login[0][0]);
 
   }catch(e){
