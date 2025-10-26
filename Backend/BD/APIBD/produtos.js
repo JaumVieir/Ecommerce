@@ -17,7 +17,7 @@ router.get("/healthz/db", async (_, res) => {
 
 router.get("/getByCategoria", async (req, res) => {
   try {
-    const [categoria] = await pool.query(`SELECT  DISTINCT category FROM produtos ORDER BY category`);
+    const [categoria] = await pool.query("SELECT  DISTINCT category FROM produtos ORDER BY category");
     res.json(categoria);
   } catch (e) {
     res.status(500).json({ error: "Erro ao buscar produtos" });
