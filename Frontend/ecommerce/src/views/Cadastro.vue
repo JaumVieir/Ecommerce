@@ -98,7 +98,6 @@ export default {
       }, 2000);
     },
     async handleRegister() {
-      // Aqui você pode integrar com API ou Firebase
       try {
         const response = await api.post('/usuariosecommerce/cadastro', {
           nome: this.name,

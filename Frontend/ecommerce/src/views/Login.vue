@@ -22,14 +22,12 @@ export default {
       }, 2000);
     },
     async handleLogin() {
-      // Aqui você pode integrar com API ou Firebase
       try {
         const resp = await api.post("/usuariosEcommerce/login", 
           { email:this.email, senha: this.password },
           {headers: { "Content-Type": "application/json"}}
         )
         const data = resp.data ?? {};
-        console.log("data login:", data);
         const userId = data?.id ? String(data.id) : '';
         if (!userId) {
           throw new Error("Servidor não retornou ID"); 
