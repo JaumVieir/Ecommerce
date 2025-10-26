@@ -113,7 +113,7 @@ export default {
           throw new Error("Servidor não retornou ID");
         }
 
-        await axios.post('http://localhost:3000/usuarios', {
+        await api.post('/usuarios', {
           id: userId,
         }, { headers: { "Content-Type": "application/json" } });
 
