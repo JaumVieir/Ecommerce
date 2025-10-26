@@ -9,6 +9,17 @@ import vendaSQL from "./vendasSQL.js";
 
 const app = express();
 app.use(cors());
+
+app.use(
+  cors({
+    origin: "https://ecommerce-89hivg6o3-jaumvieirs-projects.vercel.app", 
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true, 
+  })
+);
+
+app.options("*", cors());
+
 app.use(express.json());
 
 connectDB().then(() => {
