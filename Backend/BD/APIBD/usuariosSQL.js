@@ -33,7 +33,7 @@ router.post("/cadastro", async (req, res) =>{
 router.post("/login", async (req,res) =>{
   try{
     const {email, senha} = req.body;
-    const cmd = `Select * from Usuarios WHERE email = ? and senha = ?`;
+    const cmd = `Select * from usuarios WHERE email = ? and senha = ?`;
     const login = await pool.query(cmd, [email,senha]);
 
     return res.json(login[0][0]);
