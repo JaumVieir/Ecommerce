@@ -1,7 +1,7 @@
 <script>
 import Detalhes from "../components/Detalhes.vue";
 import { getAuth } from "../services/auth.js";
-import axios from "axios";
+import api from "../services/api";
 
 export default {
   components: {
@@ -41,8 +41,7 @@ export default {
         }
       this.loadingRecentes = true;
       this.loadingComprados = true;
-        axios
-          .get(`http://localhost:3000/vendas/getVendasById/${userId}`)
+        api.get(`/vendas/getVendasById/${userId}`)
           .then((response) => {
             this.compras = response.data.map((c) => ({
               id: c.id ?? Date.now(),
@@ -51,8 +50,7 @@ export default {
               itens: Array.isArray(c.produtos) ? c.produtos : [],
             }));
 
-          axios
-            .get(`http://localhost:3000/produtos/predicaoByCompras/${userId}`)
+          api.get(`/produtos/predicaoByCompras/${userId}`)
             .then((res) => {
               console.log(res.data);
               const produtosCliques = res.data || [];
@@ -61,8 +59,7 @@ export default {
                   const recente = produtosCliques.product_id;
                   this.nomeProdutoComprado = produtosCliques.product_name;
                   console.log(recente);
-                  axios
-                    .get(`http://localhost:3000/produtos/predicao/${recente}`)
+                  api.get(`/produtos/predicao/${recente}`)
                     .then((res) => {
                       this.produtosComprados =
                         res.data?.data?.length > 0
@@ -87,15 +84,13 @@ export default {
               this.loadingComprados = false;
             });
 
-          axios
-            .get(`http://localhost:3000/produtos/predicaoByClique/${userId}`)
+          api.get(`/produtos/predicaoByClique/${userId}`)
             .then((res) => {
               const produtosCliques = res.data || [];
               if (produtosCliques != null) {
                 if (produtosCliques.Recente != null) {
                   const recente = produtosCliques.Recente;
-                  axios
-                    .get(`http://localhost:3000/produtos/predicao/${recente}`)
+                  api.get(`/produtos/predicao/${recente}`)
                     .then((res) => {
                       this.produtosRecentes =
                         res.data?.data?.length > 0
@@ -201,7 +196,7 @@ export default {
       };
 
       try {
-        await axios.post(`http://localhost:3000/usuarios/setClique`, cliques);
+        await api.post(`/usuarios/setClique`, cliques);
         this.$router.push({ path: `/produto/${id}` });
       } catch (error) {
         console.error("Erro ao registrar clique:", error);
