@@ -5,15 +5,6 @@ import { text } from "stream/consumers";
 
 const router = express.Router();
 
-router.get("/healthz/db", async (_, res) => {
-  try {
-    const [rows] = await pool.query("SELECT * from produtos");
-    res.json(rows[0]);
-  } catch (err) {
-    console.error("Erro DB:", err.message);
-    res.status(500).send("erro ao conectar ao banco");
-  }
-});
 
 router.get("/getByCategoria", async (req, res) => {
   try {
@@ -43,7 +34,7 @@ router.get("/", async (req, res) => {
   try {
     //const produtos = await getDB().collection('ProdutosAmazon').find({}).toArray();
     const produtos = await pool.query(`Select * from Produtos`);
-
+    console.log(produtos);
     res.json(produtos);
   } catch (err) {
     res.status(500).json({ error: "Error ao buscar produtos" });
