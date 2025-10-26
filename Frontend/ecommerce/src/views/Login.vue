@@ -1,5 +1,6 @@
 <script>
-import axios from 'axios';
+import api from '../services/api';
+
 export default {
   data() {
     return {
@@ -23,7 +24,7 @@ export default {
     async handleLogin() {
       // Aqui você pode integrar com API ou Firebase
       try {
-        const resp = await axios.post("http://localhost:3000/usuariosEcommerce/login", 
+        const resp = api.post("/usuariosEcommerce/login", 
           { email:this.email, senha: this.password },
           {headers: { "Content-Type": "application/json"}}
         )
