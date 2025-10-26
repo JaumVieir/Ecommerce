@@ -195,6 +195,7 @@ export default {
       try {
         const response = await api.get("/produtos");
         this.produtos = response.data[0];
+        console.log(this.produtos);
       } catch (error) {
         console.error(error);
         alert("Erro ao carregar produtos. Tente novamente.");
