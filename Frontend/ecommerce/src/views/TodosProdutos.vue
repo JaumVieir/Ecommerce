@@ -1,6 +1,7 @@
 <script>
 import axios from "axios";
 import { getAuth } from "../services/auth.js";
+import api from "../services/api.js";
 
 export default {
   data() {
@@ -111,7 +112,7 @@ export default {
         console.log(cliques);
         try {
           const resposta = await api.post(
-            `http://localhost:3000/usuarios/setClique`,
+            `/usuarios/setClique`,
             cliques
           );
         } catch (error) {
@@ -170,8 +171,8 @@ export default {
     },
     async buscarProdutos(texto) {
       try {
-        const response = await axios.get(
-          `http://localhost:3000/produtos/getByTexto/${texto}`
+        const response = await api.get(
+          `/produtos/getByTexto/${texto}`
         );
         this.produtos = response.data;
       } catch (error) {
@@ -181,8 +182,8 @@ export default {
     },
     async getCategoria() {
       try {
-        const response = await axios.get(
-          `http://localhost:3000/produtos/getByCategoria`
+        const response = await api.get(
+          `/produtos/getByCategoria`
         );
 
         this.categorias = response.data.map((cat) => cat.category);
@@ -192,7 +193,7 @@ export default {
     },
     async getProdutos() {
       try {
-        const response = await axios.get("http://localhost:3000/produtos");
+        const response = await api.get("/produtos");
         this.produtos = response.data[0];
       } catch (error) {
         console.error(error);
@@ -216,8 +217,8 @@ export default {
       };
 
       try {
-        const resposta = await axios.post(
-          `http://localhost:3000/usuarios/setClique`,
+        const resposta = await api.post(
+          `/usuarios/setClique`,
           cliques
         );
         this.$router.push({ path: `/produto/${id}` });
