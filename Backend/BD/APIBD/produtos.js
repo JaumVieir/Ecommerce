@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.get("/healthz/db", async (_, res) => {
   try {
-    const [rows] = await pool.query("SELECT 1 AS ok");
+    const [rows] = await pool.query("SELECT * from produtos");
     res.json(rows[0]);
   } catch (err) {
     console.error("Erro DB:", err.message);
