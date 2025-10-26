@@ -194,6 +194,7 @@ export default {
     async getProdutos() {
       try {
         const response = await api.get("/produtos");
+        console.log(response.data);
         this.produtos = response.data[0];
         console.log(this.produtos);
       } catch (error) {
