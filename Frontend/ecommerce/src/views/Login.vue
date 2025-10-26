@@ -29,6 +29,7 @@ export default {
           {headers: { "Content-Type": "application/json"}}
         )
         const data = resp.data ?? {};
+        console.log("data login:", data);
         const userId = data?.id ? String(data.id) : '';
         if (!userId) {
           throw new Error("Servidor não retornou ID"); 
