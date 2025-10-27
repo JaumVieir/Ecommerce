@@ -2,12 +2,12 @@
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { getAuth } from "../services/auth.js";
-import axios from "axios";
+import api from "../services/api.js";
 
 export default {
   data() {
     return {
-      carrinho: [], // Array de produtos no carrinho
+      carrinho: [], 
       toastVisible: false,
       toastMessage: "",
       toastTimer: null,
@@ -26,19 +26,16 @@ export default {
         return acc + preco * qtd;
       }, 0);
     },
-    // Classes dinâmicas: aplica scroll a partir de 3 itens
+   
     listaCarrinhoClasses() {
-      // Altura alvo ligeiramente menor que 3 linhas para o scroll aparecer já com 3 produtos
-      // min-h de cada item ~7rem (min-h-28) + espaçamento vertical (space-y-6 => 1.5rem)
-      // 3 itens ~= 3*7rem + 2*1.5rem = 24rem. Usamos 23rem para forçar o overflow com 3 itens.
+      
       return this.carrinho.length >= 3
         ? "overflow-y-auto max-h-[23rem] pr-2"
         : "";
     },
   },
   mounted() {
-    // Simulação: buscar carrinho do localStorage ou API
-    // Substitua por chamada real se necessário
+
     const carrinhoSalvo = localStorage.getItem("carrinho");
     if (carrinhoSalvo) {
       const arr = JSON.parse(carrinhoSalvo);
@@ -131,7 +128,7 @@ export default {
             .join(",")}
         ]}`;
 
-       axios.post("http://localhost:3000/vendas", JSON.parse(jsonProdutos)).then((response) => {
+       api.post("/vendas", JSON.parse(jsonProdutos)).then((response) => {
 
           console.log("Compra registrada com sucesso:", response.data);
 
