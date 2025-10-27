@@ -33,5 +33,4 @@ coverage/
 
 #b.o
 Backend/BD/APIBD/db.js
-Backend/BD/Recomendacao/Recomendacao.py
 Backend/BD/APIBD/produtos.js
