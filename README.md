@@ -103,3 +103,5 @@ A proposta do Projeto descreve que as informações de Produto, Usuario e Venda 
 #### Como o Mongo só está sendo usado para captar a atividade, ou seja, os cliques, sendo produtos, compra e usuarios registrados no SQL, essa função
 #### será utilizada apenas, para "trazer" o ID do usuário no SQL para o Mongo, afim de criar um chaveamento unico geral. Isso deve ocorrer no momento 
 #### de cadastramento do usuário, para evitar erros e bugs.
+
+teste local fastapi: python -m uvicorn app:app --port 8000 --reload --env-file .env

@@ -12,9 +12,12 @@ def limpa_texto(texto):
     texto = re.sub(r"[^a-zA-Z0-9\s]", "", texto)
     return " ".join([w for w in texto.split() if w not in STOP_WORDS])
 
-DATA_DIR   = os.environ.get("DATA_DIR", "./data")         # aponte para disco persistente
-INPUT_CSV  = os.environ.get("INPUT_CSV", "./data/produtos.csv")
-os.makedirs(DATA_DIR, exist_ok=True)
+df = pd.read_csv("/Users/macbook/Projects/Ecommerce/Backend/BD/Recomendacao/produtos3.1.csv").dropna()
+df["product_name"] = df["product_name"].apply(limpa_texto)
+df["category"] = df["category"].apply(limpa_texto)
+df["actual_price"] = df["actual_price"].astype(str).str.replace("₹", "").str.replace(",", "").astype(float)
+df["rating"] = pd.to_numeric(df["rating"].astype(str).str.replace("|", ""), errors="coerce")
+df["rating_count"] = df["rating_count"].astype(str).str.replace(",", "").astype(int)
 
 df = pd.read_csv(INPUT_CSV).dropna()
 df["product_name"] = df["product_name"].apply(limpa_texto)
@@ -27,7 +30,21 @@ df["combined_text"]= (df["product_name"] + " " + df["category"]).fillna("") + " 
 
 vectorizer   = TfidfVectorizer(stop_words=list(STOP_WORDS), max_df=0.95, min_df=2, ngram_range=(1,1))
 tfidf_matrix = vectorizer.fit_transform(df["combined_text"])
-cosine_sim   = cosine_similarity(tfidf_matrix)
+cosine_sim_matrix = cosine_similarity(tfidf_matrix)
+
+print("Salvando arquivos...")
+
+with open("/Users/macbook/Projects/Ecommerce/Backend/BD/Recomendacao/vectorizer.pkl", "wb") as f:
+    pickle.dump(vectorizer, f)
+
+with open("/Users/macbook/Projects/Ecommerce/Backend/BD/Recomendacao/tfidf_matrix.pkl", "wb") as f:
+    pickle.dump(tfidf_matrix, f)
+
+with open("/Users/macbook/Projects/Ecommerce/Backend/BD/Recomendacao/cosine_sim_matrix.pkl", "wb") as f:
+    pickle.dump(cosine_sim_matrix, f)
+
+with open("/Users/macbook/Projects/Ecommerce/Backend/BD/Recomendacao/produtos_df.pkl", "wb") as f:
+    pickle.dump(df, f)
 
 with open(f"{DATA_DIR}/vectorizer.pkl", "wb") as f: pickle.dump(vectorizer, f)
 with open(f"{DATA_DIR}/tfidf_matrix.pkl", "wb") as f: pickle.dump(tfidf_matrix, f)

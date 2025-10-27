@@ -34,3 +34,8 @@ coverage/
 #b.o
 Backend/BD/APIBD/db.js
 Backend/BD/APIBD/produtos.js
+.gitignore
+Backend/BD/APIBD/python-svc/artifacts/cosine_sim_matrix.pkl
+Backend/BD/APIBD/python-svc/artifacts/produtos_df.pkl
+Backend/BD/APIBD/python-svc/artifacts/tfidf_matrix.pkl
+Backend/BD/APIBD/python-svc/artifacts/vectorizer.pkl
