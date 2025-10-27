@@ -1,10 +1,13 @@
 import express from "express";
+import axios from "axios";
 import { getDB, pool } from "../APIBD/db.js";
-import { spawn } from "child_process";
-import { text } from "stream/consumers";
 
 const router = express.Router();
 
+const RECS_ENABLED = String(process.env.RECS_ENABLED || "false").toLowerCase() === "true";
+const PY_SVC_URL = process.env.PY_SVC_URL;
+const PY_SVC_TOKEN = process.env.PY_SVC_TOKEN; 
+console.log('[recs]', { RECS_ENABLED, PY_SVC_URL, hasToken: !!PY_SVC_TOKEN });
 
 router.get("/getByCategoria", async (req, res) => {
   try {
@@ -15,14 +18,13 @@ router.get("/getByCategoria", async (req, res) => {
   }
 });
 
-
 router.get("/getByTexto/:texto", async (req, res) => {
   try {
     const { texto } = req.params;
-
+    const like = `%${texto}%`; // ✅ parametrizado
     const [produtos] = await pool.query(
-      `SELECT * FROM produtos WHERE product_name LIKE '%${texto}%' OR descricao LIKE '%${texto}%'`,
-      [texto, texto]
+      `SELECT * FROM produtos WHERE product_name LIKE ? OR descricao LIKE ?`,
+      [like, like]
     );
     res.json(produtos);
   } catch (err) {
@@ -137,46 +139,23 @@ router.get("/predicaoByClique/:idUsuario", async (req, res) => {
 
 router.get("/predicao/:id", async (req, res) => {
   try {
-    let { id } = req.params;
+    const produtoId = req.params.id; // string (ex.: B0BF16HHWC)
+    if (!produtoId) return res.status(400).json({ error: "produtoId inválido" });
 
-    const input = JSON.stringify({ id });
+    if (!RECS_ENABLED) {
+      return res.json({ data: [] });
+    }
 
-    const arquivo = spawn("python", [
-      "C:/Users/vitor/OneDrive/Área de Trabalho/Ecommerce/Backend/BD/Recomendacao/Recomendacao.py",
-    ]);
-
-    let respostas = "";
-    let erro = "";
-
-    arquivo.stdout.on("data", (data) => (respostas += data.toString()));
-    arquivo.stderr.on("data", (data) => (erro += data.toString()));
-
-    arquivo.on("close", (codigo) => {
-      if (codigo !== 0 && !respostas) {
-        return res.status(500).json({
-          ok: false,
-          error: "Python retornou erro",
-          stderr: erro,
-        });
-      }
-      try {
-        const json = JSON.parse(respostas || "{}");
-        return res.json(json);
-      } catch (e) {
-        return res.status(500).json({
-          ok: false,
-          error: "Resposta do Python não é JSON válido",
-          detalhe: String(e?.message || e),
-          stdout: respostas,
-          stderr: erro,
-        });
-      }
+    const r = await axios.get(`${PY_SVC_URL}/recomendar`, {
+      params: { prod_id: produtoId, topk: 10 },
+      headers: { "X-Auth": PY_SVC_TOKEN },
+      timeout: 5000,
     });
 
-    arquivo.stdin.write(input);
-    arquivo.stdin.end();
+    return res.json(r.data);
   } catch (err) {
-    res.status(500).json({ ok: false, error: "Erro interno" });
+    console.error("[predicao]", err.response?.status, err.message);
+    return res.status(200).json({ data: [] });
   }
 });
 
