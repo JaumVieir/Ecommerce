@@ -253,8 +253,8 @@
 </template>
 
 <script>
-import axios from "axios";
 import { getAuth } from "../services/auth.js";
+import api from "../services/api.js";
 
 export default {
   data() {
@@ -319,7 +319,7 @@ export default {
       };
 
       try {
-        await axios.post(`http://localhost:3000/usuarios/setClique`, cliques);
+        await api.post(`/usuarios/setClique`, cliques);
         // Recarrega a página com o novo produto
         this.$router.push({ path: `/produto/${id}` });
         // Força o reload do componente
@@ -404,7 +404,7 @@ export default {
     },
     async getProduto() {
       try {
-        const response = await axios.get(`http://localhost:3000/produtos`);
+        const response = await api.get(`/produtos`);
 
         const produtosArray = response.data[0];
 
@@ -414,8 +414,8 @@ export default {
 
         console.log("Produto carregado:", this.produto);
         this.loadingPredicoes = true;
-        const resultado = await axios.get(
-          `http://localhost:3000/produtos/predicao/${this.produto.product_id}`
+        const resultado = await api.get(
+          `/produtos/predicao/${this.produto.product_id}`
         );
         console.log("Predições recebidas:", resultado.data);
         const rawString = resultado?.data;
