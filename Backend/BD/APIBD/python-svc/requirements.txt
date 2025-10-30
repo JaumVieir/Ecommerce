@@ -1,4 +1,7 @@
 fastapi
-uvicorn[standard]
 pandas
 scikit-learn
+uvicorn
+huggingface_hub>=0.24
+numpy
+pandas            
