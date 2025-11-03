@@ -6,6 +6,7 @@ import usuarios from "./usuarios.js";
 import usuariosSQL from "./usuariosSQL.js";
 import vendaSQL from "./vendasSQL.js";
 import recRouter from "./recs.js";
+import { warmupPython } from "./recsClient.js";
 
 const app = express();
 
@@ -58,6 +59,7 @@ connectDB().then(() => {
 
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+  warmupPython().catch(() => {});
 }).catch(err => {
   console.error("Erro ao conectar", err);
 });
