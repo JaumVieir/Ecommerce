@@ -1,6 +1,6 @@
 # convert_to_sparse_npz.py
 import pickle, pandas as pd
-from scipy.sparse import save_npz, csr_matrix
+from scipy.sparse import load_npz, csr_matrix
 import numpy as np
 
 # 1) df

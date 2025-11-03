@@ -1,5 +1,10 @@
-fastapi
-uvicorn
-huggingface_hub>=0.24
-pandas
-numpy
+--only-binary=:all:
+
+fastapi==0.115.6
+uvicorn[standard]==0.32.0
+
+numpy==2.1.2
+scipy==1.14.1
+
+pandas==2.2.2
+pyarrow==17.0.0
