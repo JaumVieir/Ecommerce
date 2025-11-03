@@ -5,7 +5,7 @@ import produtos from "./produtos.js";
 import usuarios from "./usuarios.js";
 import usuariosSQL from "./usuariosSQL.js";
 import vendaSQL from "./vendasSQL.js";
-import { recsRouter } from "./recs.js";
+import router from "./recs.js";
 
 const app = express();
 
@@ -51,7 +51,7 @@ connectDB().then(() => {
   app.use("/usuariosEcommerce", usuariosSQL);
   app.use("/vendas", vendaSQL);
 
-  app.use("/recs", recsRouter);
+  app.use("/recs", router);
 
 
   app.get("/health", (_req, res) => res.send("ok"));
