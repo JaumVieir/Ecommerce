@@ -5,7 +5,7 @@ import produtos from "./produtos.js";
 import usuarios from "./usuarios.js";
 import usuariosSQL from "./usuariosSQL.js";
 import vendaSQL from "./vendasSQL.js";
-import recsRouter from "./recs.js";
+import { recsRouter } from "./recs.js";
 
 const app = express();
 
