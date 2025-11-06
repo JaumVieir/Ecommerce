@@ -2,6 +2,7 @@
 import Detalhes from "../components/Detalhes.vue";
 import { getAuth } from "../services/auth.js";
 import api from "../services/api";
+import axios from "axios";
 
 export default {
   components: {
@@ -59,7 +60,7 @@ export default {
                   const recente = produtosCliques.product_id;
                   this.nomeProdutoComprado = produtosCliques.product_name;
                   console.log(recente);
-                  api.get(`/produtos/predicao/${recente}`)
+                  axios.get(`https://ecommerce-node-6llb.onrender.com/recs?prod_id=${recente}&topk=8$`)
                     .then((res) => {
                       this.produtosComprados =
                         res.data?.data?.length > 0
@@ -90,7 +91,7 @@ export default {
               if (produtosCliques != null) {
                 if (produtosCliques.Recente != null) {
                   const recente = produtosCliques.Recente;
-                  api.get(`/produtos/predicao/${recente}`)
+                  axios.get(`https://ecommerce-node-6llb.onrender.com/recs?prod_id=${recente}&topk=8$`)
                     .then((res) => {
                       this.produtosRecentes =
                         res.data?.data?.length > 0
