@@ -37,7 +37,7 @@ export default {
     produtosPaginação() {
       const inicio = (this.paginaAtual - 1) * this.produtosPorPagina;
       const fim = inicio + this.produtosPorPagina;
-      return produtosFiltrados.slice(inicio, fim);
+      return this.produtosFiltrados.slice(inicio, fim);
     },
     totalPaginas() {
       return Math.ceil(this.produtosFiltrados.length / this.produtosPorPagina);
