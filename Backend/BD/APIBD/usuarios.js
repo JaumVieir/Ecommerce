@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.post("/", async (req, res) => {
     try {
-      body.id = new Int32(parseInt(body.id));
+      body.id = parseInt(body.id);
         const produtos = await getDB().collection('Usuarios').insertOne(body);
         res.json({"Mensagem":"Sucesso!"})
     } catch (err) {
