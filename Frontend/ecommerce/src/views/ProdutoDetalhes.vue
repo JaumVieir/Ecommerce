@@ -255,6 +255,7 @@
 <script>
 import { getAuth } from "../services/auth.js";
 import api from "../services/api.js";
+import axios from "axios";
 
 export default {
   data() {
