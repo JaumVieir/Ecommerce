@@ -32,14 +32,13 @@ router.get("/getByTexto/:texto", async (req, res) => {
   }
 });
 
-router.get("/", async (req, res) => {
+router.get("/", async (_req, res) => {
   try {
-    //const produtos = await getDB().collection('ProdutosAmazon').find({}).toArray();
-    const produtos = await pool.query(`Select * from produtos`);
-    console.log(produtos);
-    res.json(produtos);
+    const [rows] = await pool.query("SELECT * FROM produtos");
+    res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: "Error ao buscar produtos" });
+    console.error("[/produtos] ERRO:", err);
+    res.status(500).json({ error: "Erro ao buscar produtos" });
   }
 });
 
