@@ -87,6 +87,7 @@ export default {
 
           api.get(`/produtos/predicaoByClique/${userId}`)
             .then((res) => {
+              console.log(res.data);
               const produtosCliques = res.data || [];
               if (produtosCliques != null) {
                 if (produtosCliques.Recente != null) {
