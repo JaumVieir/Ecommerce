@@ -7,8 +7,7 @@ const router = express.Router();
 
 router.post("/", async (req, res) => {
     try {
-      body.id = parseInt(body.id);
-        const produtos = await getDB().collection('Usuarios').insertOne(body);
+        const produtos = await getDB().collection('Usuarios').insertOne(req.body);
         res.json({"Mensagem":"Sucesso!"})
     } catch (err) {
         res.status(500).json({ error: "Error ao buscar usuários" })
