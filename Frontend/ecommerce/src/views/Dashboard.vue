@@ -60,7 +60,7 @@ export default {
                   const recente = produtosCliques.product_id;
                   this.nomeProdutoComprado = produtosCliques.product_name;
                   console.log(recente);
-                  axios.get(`https://ecommerce-node-6llb.onrender.com/recs?prod_id=${recente}&topk=1$`)
+                  axios.get(`https://ecommerce-node-6llb.onrender.com/recs?prod_id=${recente}&topk=8`)
                     .then((res) => {
                       this.produtosComprados =
                         res.data?.data?.length > 0
@@ -91,7 +91,7 @@ export default {
               if (produtosCliques != null) {
                 if (produtosCliques.Recente != null) {
                   const recente = produtosCliques.Recente;
-                  axios.get(`https://ecommerce-node-6llb.onrender.com/recs?prod_id=${recente}&topk=1$`)
+                  axios.get(`https://ecommerce-node-6llb.onrender.com/recs?prod_id=${recente}&topk=8`)
                     .then((res) => {
                       this.produtosRecentes =
                         res.data?.data?.length > 0
