@@ -10,7 +10,7 @@ const app = express();
 
 // allowlist fixo + regex p/ previews da Vercel desse projeto
 const allowlist = [
-  "https://ecommerce-89hivg6o3-jaumvieirs-projects.vercel.app", // antigo
+  "https://ecommerce-9kuo5mpjq-jaumvieirs-projects.vercel.app/", // antigo
   "http://localhost:5173",
   "http://localhost:3000",
 ];
