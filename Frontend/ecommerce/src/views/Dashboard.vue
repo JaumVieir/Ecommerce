@@ -91,6 +91,7 @@ export default {
               if (produtosCliques != null) {
                 if (produtosCliques.Recente != null) {
                   const recente = produtosCliques.Recente;
+                  console.log('recente', recente);
                   axios.get(`https://ecommerce-node-6llb.onrender.com/recs?prod_id=${recente}&topk=8`)
                     .then((res) => {
                       this.produtosRecentes =
