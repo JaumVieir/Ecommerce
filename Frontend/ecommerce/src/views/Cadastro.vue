@@ -112,7 +112,7 @@ export default {
         }
 
         await api.post('/usuarios', {
-          id: userId,
+          id: parseInt(userId),
         }, { headers: { "Content-Type": "application/json" } });
 
         this.openToast('Conta criada com sucesso!');
