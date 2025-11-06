@@ -416,7 +416,7 @@ export default {
         console.log("Produto carregado:", this.produto);
         this.loadingPredicoes = true;
         const resultado = await axios.get(
-          `https://ecommerce-node-6llb.onrender.com/recs?prod_id=${this.produto.product_id}&topk=5`
+          `https://ecommerce-node-6llb.onrender.com/recs?prod_id=${this.produto.product_id}&topk=8`
         );
         console.log("Predições recebidas:", resultado.data);
         const rawString = resultado?.data;
