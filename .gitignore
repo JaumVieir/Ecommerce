@@ -39,8 +39,3 @@ Backend/BD/APIBD/python-svc/artifacts/cosine_sim_matrix.pkl
 Backend/BD/APIBD/python-svc/artifacts/produtos_df.pkl
 Backend/BD/APIBD/python-svc/artifacts/tfidf_matrix.pkl
 Backend/BD/APIBD/python-svc/artifacts/vectorizer.pkl
-
-Backend\BD\Recomendacao\cosine_sim_matrix.pkl
-Backend\BD\Recomendacao\tfidf_matrix.pkl
-Backend\BD\Recomendacao\vectorizer.pkl
-Backend\BD\Recomendacao\produtos_df.pkl
