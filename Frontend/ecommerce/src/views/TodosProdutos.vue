@@ -17,6 +17,8 @@ export default {
       ordenacao: "",
       categorias: " ",
       categoriaSelecionada: "",
+      isRestoringState: false, // Flag para controlar restauração de estado
+      carregandoInicial: true, // Flag para mostrar loading inicial
       // Toast simples para feedback de adição ao carrinho
       toastVisible: false,
       toastMessage: "",
@@ -59,6 +61,24 @@ export default {
   },
 
   async mounted() {
+    // Ativar flag de restauração
+    this.isRestoringState = true;
+    
+    // Tentar restaurar cache de produtos do sessionStorage
+    const cacheStr = sessionStorage.getItem('todosProdutos_cache');
+    const totalStr = sessionStorage.getItem('todosProdutos_total');
+    
+    if (cacheStr && totalStr) {
+      try {
+        this.produtosCache = JSON.parse(cacheStr);
+        this.totalProdutosServidor = parseInt(totalStr);
+        this.paginasCarregadas = Math.ceil(this.produtosCache.length / this.produtosPorPagina);
+        this.carregandoInicial = false;
+      } catch (e) {
+        console.error('Erro ao restaurar cache:', e);
+      }
+    }
+    
     // Restaurar estado da página se existir
     const paginaSalva = sessionStorage.getItem('todosProdutos_paginaAtual');
     const categoriaSalva = sessionStorage.getItem('todosProdutos_categoriaSelecionada');
@@ -74,10 +94,17 @@ export default {
       this.ordenacao = ordenacaoSalva;
     }
     
-    // Carregar produtos suficientes para a página atual
-    const paginaParaCarregar = paginaSalva ? parseInt(paginaSalva) : 1;
-    await this.carregarProdutosPaginados(paginaParaCarregar);
+    // Se não temos cache ou está vazio, carregar produtos
+    if (!this.produtosCache.length) {
+      const paginaParaCarregar = paginaSalva ? parseInt(paginaSalva) : 1;
+      await this.carregarProdutosPaginados(paginaParaCarregar);
+      this.carregandoInicial = false;
+    }
+    
     this.getCategoria();
+    
+    // Desativar flag após restauração
+    this.isRestoringState = false;
   },
   watch: {
     paginaAtual(novaPagina) {
@@ -85,8 +112,14 @@ export default {
       this.verificarCarregarMaisProdutos(novaPagina);
     },
     categoriaSelecionada() {
+      // Não resetar se estamos restaurando o estado salvo
+      if (this.isRestoringState) return;
+      
       // Resetar para página 1 ao mudar de categoria
       this.paginaAtual = 1;
+      
+      // Limpar estado salvo da página ao mudar categoria
+      sessionStorage.removeItem('todosProdutos_paginaAtual');
     },
     ordenacao() {
       switch (this.ordenacao) {
@@ -224,6 +257,10 @@ export default {
         this.produtosCache = response.data;
         this.totalProdutosServidor = response.data.length;
         this.paginaAtual = 1;
+        
+        // Limpar cache do sessionStorage durante busca
+        sessionStorage.removeItem('todosProdutos_cache');
+        sessionStorage.removeItem('todosProdutos_total');
       } catch (error) {
         console.error(error);
         alert("Erro ao carregar produtos. Tente novamente.");
@@ -304,6 +341,14 @@ export default {
           } else if (this.totalProdutosServidor === 0) {
             // Se ainda não temos o total, fazer fallback
             await this.getProdutosSemPaginacao();
+          }
+          
+          // Salvar cache no sessionStorage para carregamento rápido
+          try {
+            sessionStorage.setItem('todosProdutos_cache', JSON.stringify(this.produtosCache));
+            sessionStorage.setItem('todosProdutos_total', this.totalProdutosServidor.toString());
+          } catch (e) {
+            console.log('Não foi possível salvar cache:', e);
           }
         }
       } catch (error) {
@@ -472,10 +517,30 @@ export default {
               </select>
             </div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4">
+          <!-- Loading Skeleton -->
+          <div v-if="carregandoInicial" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4">
+            <div
+              v-for="i in 8"
+              :key="'skeleton-' + i"
+              class="bg-white rounded-xl overflow-hidden shadow-md animate-pulse"
+            >
+              <div class="w-full h-32 bg-gray-200 mt-5"></div>
+              <div class="p-4">
+                <div class="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div class="flex items-center justify-between pt-2">
+                  <div class="h-5 bg-gray-200 rounded w-20"></div>
+                  <div class="h-9 w-9 bg-gray-200 rounded-full"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Produtos reais -->
+          <div v-else class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4">
             <!-- Primeiro produto -->
             <div
-              v-for="produto in produtosPaginação"
+              v-for="produto in produtospaginação"
               :key="produto.id"
               class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
             >
