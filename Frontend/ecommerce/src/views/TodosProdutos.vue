@@ -56,6 +56,21 @@ export default {
   },
 
   mounted() {
+    // Restaurar estado da página se existir
+    const paginaSalva = sessionStorage.getItem('todosProdutos_paginaAtual');
+    const categoriaSalva = sessionStorage.getItem('todosProdutos_categoriaSelecionada');
+    const ordenacaoSalva = sessionStorage.getItem('todosProdutos_ordenacao');
+    
+    if (paginaSalva) {
+      this.paginaAtual = parseInt(paginaSalva);
+    }
+    if (categoriaSalva) {
+      this.categoriaSelecionada = categoriaSalva;
+    }
+    if (ordenacaoSalva) {
+      this.ordenacao = ordenacaoSalva;
+    }
+    
     this.carregarProdutosPaginados(1); // Carregar as primeiras 2 páginas
     this.getCategoria();
   },
@@ -297,6 +312,11 @@ export default {
       };
 
       try {
+        // Salvar estado da página atual antes de navegar
+        sessionStorage.setItem('todosProdutos_paginaAtual', this.paginaAtual);
+        sessionStorage.setItem('todosProdutos_categoriaSelecionada', this.categoriaSelecionada);
+        sessionStorage.setItem('todosProdutos_ordenacao', this.ordenacao);
+        
         const resposta = await api.post(
           `/usuarios/setClique`,
           cliques

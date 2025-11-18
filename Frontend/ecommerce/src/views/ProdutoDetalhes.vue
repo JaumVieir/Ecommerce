@@ -4,7 +4,15 @@
     <header class="bg-white shadow-md sticky top-0 z-10">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center py-4">
-          <div class="flex items-center">
+          <div class="flex items-center gap-4">
+            <button
+              @click="voltarParaProdutos"
+              class="p-2 rounded-full hover:bg-gray-100 transition duration-300"
+              aria-label="Voltar"
+              title="Voltar para produtos"
+            >
+              <span class="material-symbols-outlined text-primary-600">arrow_back</span>
+            </button>
             <h1 class="text-2xl font-bold text-primary-600">E-Commerce</h1>
           </div>
           
@@ -438,6 +446,10 @@ export default {
         style: "currency",
         currency: "BRL",
       });
+    },
+    voltarParaProdutos() {
+      // Voltar para a página de produtos (o estado será restaurado automaticamente)
+      this.$router.push({ path: "/" });
     },
   },
 };
