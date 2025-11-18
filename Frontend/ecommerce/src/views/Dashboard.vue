@@ -34,33 +34,41 @@ export default {
         this.produtosComprados = [];
         return;
       }
-        // Exibe toast se vier da navegação
-        if (this.$route.query.toast) {
-          this.openToast(this.$route.query.toast);
-          // Limpa o parâmetro da URL após exibir
-          this.$router.replace({ query: { ...this.$route.query, toast: undefined } });
-        }
+      // Exibe toast se vier da navegação
+      if (this.$route.query.toast) {
+        this.openToast(this.$route.query.toast);
+        // Limpa o parâmetro da URL após exibir
+        this.$router.replace({
+          query: { ...this.$route.query, toast: undefined },
+        });
+      }
       this.loadingRecentes = true;
       this.loadingComprados = true;
-        api.get(`/vendas/getVendasById/${userId}`)
-          .then((response) => {
-            this.compras = response.data.map((c) => ({
-              id: c.id ?? Date.now(),
-              data: c.data ?? new Date().toLocaleDateString("pt-BR"),
-              valorTotal: Number(c.valorTotal) || 0,
-              itens: Array.isArray(c.produtos) ? c.produtos : [],
-            }));
-            // Mescla compras armazenadas localmente (otimista) caso API ainda não tenha propagado a última compra
-            try {
-              const storageKey = `compras:${userId}`;
-              const localCompras = JSON.parse(localStorage.getItem(storageKey) || "[]");
-              const existingIds = new Set(this.compras.map(c => c.id));
-              localCompras.forEach(c => { if (!existingIds.has(c.id)) this.compras.unshift(c); });
-            } catch (e) {
-              console.error("Falha ao mesclar compras locais:", e);
-            }
+      api
+        .get(`/vendas/getVendasById/${userId}`)
+        .then((response) => {
+          this.compras = response.data.map((c) => ({
+            id: c.id ?? Date.now(),
+            data: c.data ?? new Date().toLocaleDateString("pt-BR"),
+            valorTotal: Number(c.valorTotal) || 0,
+            itens: Array.isArray(c.produtos) ? c.produtos : [],
+          }));
+          // Mescla compras armazenadas localmente (otimista) caso API ainda não tenha propagado a última compra
+          try {
+            const storageKey = `compras:${userId}`;
+            const localCompras = JSON.parse(
+              localStorage.getItem(storageKey) || "[]"
+            );
+            const existingIds = new Set(this.compras.map((c) => c.id));
+            localCompras.forEach((c) => {
+              if (!existingIds.has(c.id)) this.compras.unshift(c);
+            });
+          } catch (e) {
+            console.error("Falha ao mesclar compras locais:", e);
+          }
 
-          api.get(`/produtos/predicaoByCompras/${userId}`)
+          api
+            .get(`/produtos/predicaoByCompras/${userId}`)
             .then((res) => {
               console.log(res.data);
               const produtosCliques = res.data || [];
@@ -69,7 +77,10 @@ export default {
                   const recente = produtosCliques.product_id;
                   this.nomeProdutoComprado = produtosCliques.product_name;
                   console.log(recente);
-                  axios.get(`https://ecommerce-node-6llb.onrender.com/recs?prod_id=${recente}&topk=8`)
+                  axios
+                    .get(
+                      `https://ecommerce-node-6llb.onrender.com/recs?prod_id=${recente}&topk=8`
+                    )
                     .then((res) => {
                       this.produtosComprados =
                         res.data?.data?.length > 0
@@ -94,15 +105,19 @@ export default {
               this.loadingComprados = false;
             });
 
-          api.get(`/produtos/predicaoByClique/${userId}`)
+          api
+            .get(`/produtos/predicaoByClique/${userId}`)
             .then((res) => {
               console.log(res.data);
               const produtosCliques = res.data || [];
               if (produtosCliques != null) {
                 if (produtosCliques.Recente != null) {
                   const recente = produtosCliques.Recente;
-                  console.log('recente', recente);
-                  axios.get(`https://ecommerce-node-6llb.onrender.com/recs?prod_id=${recente}&topk=8`)
+                  console.log("recente", recente);
+                  axios
+                    .get(
+                      `https://ecommerce-node-6llb.onrender.com/recs?prod_id=${recente}&topk=8`
+                    )
                     .then((res) => {
                       this.produtosRecentes =
                         res.data?.data?.length > 0
@@ -266,13 +281,15 @@ export default {
 <template>
   <div id="webcrumbs">
     <div class="min-h-screen bg-gray-50">
-      <header class="bg-white shadow-md sticky top-0 z-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex justify-between items-center py-4">
+      <header class="bg-white shadow-md sticky top-0 z-10 w-full">
+        <div class="w-full px-0">
+          <div class="flex justify-between items-center py-4 px-4">
+            <!-- Título -->
             <div class="flex items-center">
               <h1 class="text-2xl font-bold text-primary-600">E-Commerce</h1>
             </div>
-            
+
+            <!-- Ícones alinhados à direita -->
             <div class="flex items-center space-x-4">
               <div class="flex items-center gap-2">
                 <router-link
@@ -282,8 +299,11 @@ export default {
                   title="Ver produtos"
                   style="text-decoration: none !important"
                 >
-                  <span class="material-symbols-outlined text-primary-600">shopping_bag</span>
+                  <span class="material-symbols-outlined text-primary-600"
+                    >shopping_bag</span
+                  >
                 </router-link>
+
                 <router-link
                   to="/Carrinho"
                   class="p-2 rounded-full hover:bg-gray-100 transition duration-300 relative flex items-center"
@@ -293,6 +313,7 @@ export default {
                     >shopping_cart</span
                   >
                 </router-link>
+
                 <button
                   class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
                   @click="logout"
@@ -368,116 +389,118 @@ export default {
             <div class="flex space-x-2"></div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              <!-- Skeletons para Recentes -->
-              <template v-if="loadingRecentes">
-                <div
-                  v-for="i in 4"
-                  :key="`recent-skeleton-${i}`"
-                  class="bg-white rounded-xl overflow-hidden shadow-md animate-pulse"
-                >
-                  <div class="w-full h-32 bg-gray-100"></div>
-                  <div class="p-4 space-y-3">
-                    <div class="h-4 bg-gray-200 rounded w-1/2"></div>
-                    <div class="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div class="flex items-center justify-between pt-2">
-                      <div class="h-5 bg-gray-200 rounded w-20"></div>
-                      <div class="h-9 w-9 bg-gray-200 rounded-full"></div>
-                    </div>
+            <!-- Skeletons para Recentes -->
+            <template v-if="loadingRecentes">
+              <div
+                v-for="i in 4"
+                :key="`recent-skeleton-${i}`"
+                class="bg-white rounded-xl overflow-hidden shadow-md animate-pulse"
+              >
+                <div class="w-full h-32 bg-gray-100"></div>
+                <div class="p-4 space-y-3">
+                  <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div class="flex items-center justify-between pt-2">
+                    <div class="h-5 bg-gray-200 rounded w-20"></div>
+                    <div class="h-9 w-9 bg-gray-200 rounded-full"></div>
                   </div>
                 </div>
-              </template>
-              <template v-else-if="produtosRecentes.length === 0">
-                <div class="col-span-full text-gray-500 text-lg text-center py-8 w-full">
-                  Nenhum produto baseado em acessos recentes ainda.
-                </div>
-              </template>
-              <template v-else>
+              </div>
+            </template>
+            <template v-else-if="produtosRecentes.length === 0">
+              <div
+                class="col-span-full text-gray-500 text-lg text-center py-8 w-full"
+              >
+                Nenhum produto baseado em acessos recentes ainda.
+              </div>
+            </template>
+            <template v-else>
+              <div
+                v-for="produto in produtosRecentes"
+                :key="produto.id"
+                class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
+              >
                 <div
-                  v-for="produto in produtosRecentes"
-                  :key="produto.id"
-                  class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
+                  class="relative relative w-full h-32 bg-white flex items-center justify-center overflow-hidden mt-5"
                 >
-                  <div
-                    class="relative relative w-full h-32 bg-white flex items-center justify-center overflow-hidden mt-5"
+                  <img
+                    :src="produto.img_link"
+                    alt="Summer Floral Dress"
+                    class="object-contain h-full max-w-full"
+                    keywords="Summer Floral Dress, fashion product, ecommerce"
+                  />
+                  <div class="absolute top-3 right-3 flex flex-col gap-2">
+                    <button
+                      class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0"
+                    >
+                      <span class="material-symbols-outlined text-gray-700"
+                        >favorite</span
+                      >
+                    </button>
+                    <button
+                      class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-75"
+                    >
+                      <span class="material-symbols-outlined text-gray-700"
+                        >visibility</span
+                      >
+                    </button>
+                    <button
+                      class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-150"
+                    >
+                      <span class="material-symbols-outlined text-gray-700"
+                        >share</span
+                      >
+                    </button>
+                  </div>
+                </div>
+                <div class="p-4">
+                  <div class="flex items-center mb-2">
+                    <div class="flex">
+                      <span
+                        v-for="(tipo, idx) in getStars(produto.rating)"
+                        :key="idx"
+                        class="material-symbols-outlined text-sm"
+                        :class="
+                          tipo === 'empty' ? 'text-gray-300' : 'text-yellow-500'
+                        "
+                        :style="{
+                          'font-variation-settings':
+                            tipo === 'full' || tipo === 'half'
+                              ? `'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20`
+                              : `'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20`,
+                        }"
+                      >
+                        {{ tipo === "half" ? "star_half" : "star" }}
+                      </span>
+                    </div>
+                    <span class="text-sm text-gray-500 ml-2">{{
+                      produto.rating
+                    }}</span>
+                  </div>
+                  <h3
+                    class="font-medium text-base mb-1 hover:text-primary-600 transition duration-300 text-truncate cursor-pointer"
+                    @click="verDetalhes(produto)"
                   >
-                    <img
-                      :src="produto.img_link"
-                      alt="Summer Floral Dress"
-                      class="object-contain h-full max-w-full"
-                      keywords="Summer Floral Dress, fashion product, ecommerce"
-                    />
-                    <div class="absolute top-3 right-3 flex flex-col gap-2">
-                      <button
-                        class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0"
-                      >
-                        <span class="material-symbols-outlined text-gray-700"
-                          >favorite</span
-                        >
-                      </button>
-                      <button
-                        class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-75"
-                      >
-                        <span class="material-symbols-outlined text-gray-700"
-                          >visibility</span
-                        >
-                      </button>
-                      <button
-                        class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-150"
-                      >
-                        <span class="material-symbols-outlined text-gray-700"
-                          >share</span
-                        >
-                      </button>
-                    </div>
-                  </div>
-                  <div class="p-4">
-                    <div class="flex items-center mb-2">
-                      <div class="flex">
-                        <span
-                          v-for="(tipo, idx) in getStars(produto.rating)"
-                          :key="idx"
-                          class="material-symbols-outlined text-sm"
-                          :class="
-                            tipo === 'empty' ? 'text-gray-300' : 'text-yellow-500'
-                          "
-                          :style="{
-                            'font-variation-settings':
-                              tipo === 'full' || tipo === 'half'
-                                ? `'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20`
-                                : `'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20`,
-                          }"
-                        >
-                          {{ tipo === "half" ? "star_half" : "star" }}
-                        </span>
-                      </div>
-                      <span class="text-sm text-gray-500 ml-2">{{
-                        produto.rating
+                    {{ produto.product_name }}
+                  </h3>
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <span class="font-bold">{{
+                        formataPreco(produto.actual_price)
                       }}</span>
                     </div>
-                    <h3
-                      class="font-medium text-base mb-1 hover:text-primary-600 transition duration-300 text-truncate cursor-pointer"
-                      @click="verDetalhes(produto)"
+                    <button
+                      class="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition duration-300"
+                      @click="addAoCarrinho(produto)"
                     >
-                      {{ produto.product_name }}
-                    </h3>
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <span class="font-bold">{{
-                          formataPreco(produto.actual_price)
-                        }}</span>
-                      </div>
-                      <button
-                        class="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition duration-300"
-                        @click="addAoCarrinho(produto)"
+                      <span class="material-symbols-outlined text-primary-600"
+                        >add_shopping_cart</span
                       >
-                        <span class="material-symbols-outlined text-primary-600"
-                          >add_shopping_cart</span
-                        >
-                      </button>
-                    </div>
+                    </button>
                   </div>
                 </div>
-              </template>
+              </div>
+            </template>
           </div>
           <div class="mt-12 flex justify-center"></div>
         </div>
@@ -498,116 +521,118 @@ export default {
             <div class="flex space-x-2"></div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              <!-- Skeletons para Comprados -->
-              <template v-if="loadingComprados">
-                <div
-                  v-for="i in 4"
-                  :key="`compr-skeleton-${i}`"
-                  class="bg-white rounded-xl overflow-hidden shadow-md animate-pulse"
-                >
-                  <div class="w-full h-32 bg-gray-100"></div>
-                  <div class="p-4 space-y-3">
-                    <div class="h-4 bg-gray-200 rounded w-1/2"></div>
-                    <div class="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div class="flex items-center justify-between pt-2">
-                      <div class="h-5 bg-gray-200 rounded w-20"></div>
-                      <div class="h-9 w-9 bg-gray-200 rounded-full"></div>
-                    </div>
+            <!-- Skeletons para Comprados -->
+            <template v-if="loadingComprados">
+              <div
+                v-for="i in 4"
+                :key="`compr-skeleton-${i}`"
+                class="bg-white rounded-xl overflow-hidden shadow-md animate-pulse"
+              >
+                <div class="w-full h-32 bg-gray-100"></div>
+                <div class="p-4 space-y-3">
+                  <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div class="flex items-center justify-between pt-2">
+                    <div class="h-5 bg-gray-200 rounded w-20"></div>
+                    <div class="h-9 w-9 bg-gray-200 rounded-full"></div>
                   </div>
                 </div>
-              </template>
-              <template v-else-if="produtosComprados.length === 0">
-                <div class="col-span-full text-gray-500 text-lg text-center py-8 w-full">
-                  Nenhum produto baseado em compras ainda.
-                </div>
-              </template>
-              <template v-else>
+              </div>
+            </template>
+            <template v-else-if="produtosComprados.length === 0">
+              <div
+                class="col-span-full text-gray-500 text-lg text-center py-8 w-full"
+              >
+                Nenhum produto baseado em compras ainda.
+              </div>
+            </template>
+            <template v-else>
+              <div
+                v-for="produto in produtosComprados"
+                :key="produto.id"
+                class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
+              >
                 <div
-                  v-for="produto in produtosComprados"
-                  :key="produto.id"
-                  class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
+                  class="relative relative w-full h-32 bg-white flex items-center justify-center overflow-hidden mt-5"
                 >
-                  <div
-                    class="relative relative w-full h-32 bg-white flex items-center justify-center overflow-hidden mt-5"
+                  <img
+                    :src="produto.img_link"
+                    alt="Summer Floral Dress"
+                    class="object-contain h-full max-w-full"
+                    keywords="Summer Floral Dress, fashion product, ecommerce"
+                  />
+                  <div class="absolute top-3 right-3 flex flex-col gap-2">
+                    <button
+                      class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0"
+                    >
+                      <span class="material-symbols-outlined text-gray-700"
+                        >favorite</span
+                      >
+                    </button>
+                    <button
+                      class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-75"
+                    >
+                      <span class="material-symbols-outlined text-gray-700"
+                        >visibility</span
+                      >
+                    </button>
+                    <button
+                      class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-150"
+                    >
+                      <span class="material-symbols-outlined text-gray-700"
+                        >share</span
+                      >
+                    </button>
+                  </div>
+                </div>
+                <div class="p-4">
+                  <div class="flex items-center mb-2">
+                    <div class="flex">
+                      <span
+                        v-for="(tipo, idx) in getStars(produto.rating)"
+                        :key="idx"
+                        class="material-symbols-outlined text-sm"
+                        :class="
+                          tipo === 'empty' ? 'text-gray-300' : 'text-yellow-500'
+                        "
+                        :style="{
+                          'font-variation-settings':
+                            tipo === 'full' || tipo === 'half'
+                              ? `'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20`
+                              : `'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20`,
+                        }"
+                      >
+                        {{ tipo === "half" ? "star_half" : "star" }}
+                      </span>
+                    </div>
+                    <span class="text-sm text-gray-500 ml-2">{{
+                      produto.rating
+                    }}</span>
+                  </div>
+                  <h3
+                    class="font-medium text-base mb-1 hover:text-primary-600 transition duration-300 text-truncate cursor-pointer"
+                    @click="verDetalhes(produto)"
                   >
-                    <img
-                      :src="produto.img_link"
-                      alt="Summer Floral Dress"
-                      class="object-contain h-full max-w-full"
-                      keywords="Summer Floral Dress, fashion product, ecommerce"
-                    />
-                    <div class="absolute top-3 right-3 flex flex-col gap-2">
-                      <button
-                        class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0"
-                      >
-                        <span class="material-symbols-outlined text-gray-700"
-                          >favorite</span
-                        >
-                      </button>
-                      <button
-                        class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-75"
-                      >
-                        <span class="material-symbols-outlined text-gray-700"
-                          >visibility</span
-                        >
-                      </button>
-                      <button
-                        class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-150"
-                      >
-                        <span class="material-symbols-outlined text-gray-700"
-                          >share</span
-                        >
-                      </button>
-                    </div>
-                  </div>
-                  <div class="p-4">
-                    <div class="flex items-center mb-2">
-                      <div class="flex">
-                        <span
-                          v-for="(tipo, idx) in getStars(produto.rating)"
-                          :key="idx"
-                          class="material-symbols-outlined text-sm"
-                          :class="
-                            tipo === 'empty' ? 'text-gray-300' : 'text-yellow-500'
-                          "
-                          :style="{
-                            'font-variation-settings':
-                              tipo === 'full' || tipo === 'half'
-                                ? `'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20`
-                                : `'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20`,
-                          }"
-                        >
-                          {{ tipo === "half" ? "star_half" : "star" }}
-                        </span>
-                      </div>
-                      <span class="text-sm text-gray-500 ml-2">{{
-                        produto.rating
+                    {{ produto.product_name }}
+                  </h3>
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <span class="font-bold">{{
+                        formataPreco(produto.actual_price)
                       }}</span>
                     </div>
-                    <h3
-                      class="font-medium text-base mb-1 hover:text-primary-600 transition duration-300 text-truncate cursor-pointer"
-                      @click="verDetalhes(produto)"
+                    <button
+                      class="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition duration-300"
+                      @click="addAoCarrinho(produto)"
                     >
-                      {{ produto.product_name }}
-                    </h3>
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <span class="font-bold">{{
-                          formataPreco(produto.actual_price)
-                        }}</span>
-                      </div>
-                      <button
-                        class="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition duration-300"
-                        @click="addAoCarrinho(produto)"
+                      <span class="material-symbols-outlined text-primary-600"
+                        >add_shopping_cart</span
                       >
-                        <span class="material-symbols-outlined text-primary-600"
-                          >add_shopping_cart</span
-                        >
-                      </button>
-                    </div>
+                    </button>
                   </div>
                 </div>
-              </template>
+              </div>
+            </template>
           </div>
           <div class="mt-12 flex justify-center"></div>
         </div>

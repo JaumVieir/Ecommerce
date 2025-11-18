@@ -130,8 +130,14 @@ export default {
         ]}`;
 
         // Aguarda o registro da venda para garantir que o Dashboard carregue a nova compra sem precisar de refresh manual
+        let apiOk = false;
+        let serverId = null;
         try {
           const response = await api.post("/vendas", JSON.parse(jsonProdutos));
+          apiOk = true;
+          // Tenta obter o ID da venda retornado pela API (cobre alguns formatos comuns)
+          const rd = response?.data ?? {};
+          serverId = rd.id ?? rd.insertId ?? rd.venda_id ?? rd.venda?.id ?? null;
           console.log("Compra registrada com sucesso:", response.data);
         } catch (error) {
           console.error("Erro ao registrar compra:", error);
@@ -140,19 +146,22 @@ export default {
 
         const agora = new Date();
         const compra = {
-          id: Date.now(),
+          id: serverId || Date.now(),
           data: agora.toLocaleDateString("pt-BR"),
           valorTotal,
           itens,
           userId,
         };
 
-        const storageKey = `compras:${userId}`;
-        const comprasExistentes = JSON.parse(
-          localStorage.getItem(storageKey) || "[]"
-        );
-        comprasExistentes.unshift(compra);
-        localStorage.setItem(storageKey, JSON.stringify(comprasExistentes));
+        // Somente salva compra localmente se a chamada à API falhar (modo otimista evita duplicidade)
+        if (!apiOk) {
+          const storageKey = `compras:${userId}`;
+          const comprasExistentes = JSON.parse(
+            localStorage.getItem(storageKey) || "[]"
+          );
+          comprasExistentes.unshift(compra);
+          localStorage.setItem(storageKey, JSON.stringify(comprasExistentes));
+        }
 
         // Limpa carrinho (estado e localStorage) e redireciona
         this.carrinho = [];
