@@ -55,7 +55,25 @@ export default {
     },
   },
 
-  mounted() {
+  async mounted() {
+    // Ativar flag de restauração
+    this.isRestoringState = true;
+    
+    // Tentar restaurar cache de produtos do sessionStorage
+    const cacheStr = sessionStorage.getItem('todosProdutos_cache');
+    const totalStr = sessionStorage.getItem('todosProdutos_total');
+    
+    if (cacheStr && totalStr) {
+      try {
+        this.produtosCache = JSON.parse(cacheStr);
+        this.totalProdutosServidor = parseInt(totalStr);
+        this.paginasCarregadas = Math.ceil(this.produtosCache.length / this.produtosPorPagina);
+        this.carregandoInicial = false;
+      } catch (e) {
+        console.error('Erro ao restaurar cache:', e);
+      }
+    }
+    
     // Restaurar estado da página se existir
     const paginaSalva = sessionStorage.getItem('todosProdutos_paginaAtual');
     const categoriaSalva = sessionStorage.getItem('todosProdutos_categoriaSelecionada');
@@ -71,13 +89,29 @@ export default {
       this.ordenacao = ordenacaoSalva;
     }
     
-    this.carregarProdutosPaginados(1); // Carregar as primeiras 2 páginas
+    // Se não temos cache ou está vazio, carregar produtos
+    if (!this.produtosCache.length) {
+      const paginaParaCarregar = paginaSalva ? parseInt(paginaSalva) : 1;
+      await this.carregarProdutosPaginados(paginaParaCarregar);
+      this.carregandoInicial = false;
+    }
+    
     this.getCategoria();
   },
   watch: {
     paginaAtual(novaPagina) {
       // Verificar se precisa carregar mais produtos
       this.verificarCarregarMaisProdutos(novaPagina);
+    },
+    categoriaSelecionada() {
+      // Não resetar se estamos restaurando o estado salvo
+      if (this.isRestoringState) return;
+      
+      // Resetar para página 1 ao mudar de categoria
+      this.paginaAtual = 1;
+      
+      // Limpar estado salvo da página ao mudar categoria
+      sessionStorage.removeItem('todosProdutos_paginaAtual');
     },
     ordenacao() {
       switch (this.ordenacao) {
@@ -258,11 +292,17 @@ export default {
           // Se a resposta tiver informação sobre o total, usar
           if (response.data[1] && response.data[1].total) {
             this.totalProdutosServidor = response.data[1].total;
-          } else {
-            // Estimar o total baseado no que foi retornado
-            if (novosProdutos.length < limit) {
-              this.totalProdutosServidor = this.produtosCache.length;
-            }
+          } else if (this.totalProdutosServidor === 0) {
+            // Se ainda não temos o total, fazer fallback
+            await this.getProdutosSemPaginacao();
+          }
+          
+          // Salvar cache no sessionStorage para carregamento rápido
+          try {
+            sessionStorage.setItem('todosProdutos_cache', JSON.stringify(this.produtosCache));
+            sessionStorage.setItem('todosProdutos_total', this.totalProdutosServidor.toString());
+          } catch (e) {
+            console.log('Não foi possível salvar cache:', e);
           }
         }
       } catch (error) {
