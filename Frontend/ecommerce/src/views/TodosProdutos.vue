@@ -46,11 +46,14 @@ export default {
       return this.produtosFiltrados.slice(inicio, fim);
     },
     totalPaginas() {
-      // Se estamos filtrando por categoria, usar o total filtrado
-      if (this.categoriaSelecionada && this.categoriaSelecionada !== "" && this.categoriaSelecionada !== "Todas as Categorias") {
+      // Se estamos filtrando por categoria (e não é "Todas as Categorias"), usar o total filtrado
+      if (this.categoriaSelecionada && 
+          this.categoriaSelecionada !== "" && 
+          this.categoriaSelecionada !== "Todas as Categorias" &&
+          this.categoriaSelecionada !== " ") {
         return Math.ceil(this.produtosFiltrados.length / this.produtosPorPagina);
       }
-      // Caso contrário, usar o total do servidor
+      // Caso contrário (incluindo "Todas as Categorias"), usar o total do servidor
       return Math.ceil(this.totalProdutosServidor / this.produtosPorPagina);
     },
   },
@@ -80,6 +83,10 @@ export default {
     paginaAtual(novaPagina) {
       // Verificar se precisa carregar mais produtos
       this.verificarCarregarMaisProdutos(novaPagina);
+    },
+    categoriaSelecionada() {
+      // Resetar para página 1 ao mudar de categoria
+      this.paginaAtual = 1;
     },
     ordenacao() {
       switch (this.ordenacao) {
