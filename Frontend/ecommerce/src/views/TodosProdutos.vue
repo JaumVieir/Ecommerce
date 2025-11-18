@@ -17,8 +17,6 @@ export default {
       ordenacao: "",
       categorias: " ",
       categoriaSelecionada: "",
-      isRestoringState: false, // Flag para controlar restauração de estado
-      carregandoInicial: true, // Flag para mostrar loading inicial
       // Toast simples para feedback de adição ao carrinho
       toastVisible: false,
       toastMessage: "",
@@ -48,93 +46,38 @@ export default {
       return this.produtosFiltrados.slice(inicio, fim);
     },
     totalPaginas() {
-      // Se estamos filtrando por categoria (e não é "Todas as Categorias"), usar o total filtrado
-      if (this.categoriaSelecionada && 
-          this.categoriaSelecionada !== "" && 
-          this.categoriaSelecionada !== "Todas as Categorias" &&
-          this.categoriaSelecionada !== " ") {
+      // Se estamos filtrando por categoria, usar o total filtrado
+      if (this.categoriaSelecionada && this.categoriaSelecionada !== "" && this.categoriaSelecionada !== "Todas as Categorias") {
         return Math.ceil(this.produtosFiltrados.length / this.produtosPorPagina);
       }
-      // Caso contrário (incluindo "Todas as Categorias"), usar o total do servidor
+      // Caso contrário, usar o total do servidor
       return Math.ceil(this.totalProdutosServidor / this.produtosPorPagina);
     },
   },
 
-  async mounted() {
-    // Ativar flag de restauração
-    this.isRestoringState = true;
+  mounted() {
+    // Restaurar estado da página se existir
+    const paginaSalva = sessionStorage.getItem('todosProdutos_paginaAtual');
+    const categoriaSalva = sessionStorage.getItem('todosProdutos_categoriaSelecionada');
+    const ordenacaoSalva = sessionStorage.getItem('todosProdutos_ordenacao');
     
-    // Verificar se está vindo da página de detalhes
-    const vindoDeDetalhes = sessionStorage.getItem('todosProdutos_vindoDeDetalhes');
-    
-    // Tentar restaurar cache de produtos do sessionStorage
-    const cacheStr = sessionStorage.getItem('todosProdutos_cache');
-    const totalStr = sessionStorage.getItem('todosProdutos_total');
-    
-    if (cacheStr && totalStr) {
-      try {
-        this.produtosCache = JSON.parse(cacheStr);
-        this.totalProdutosServidor = parseInt(totalStr);
-        this.paginasCarregadas = Math.ceil(this.produtosCache.length / this.produtosPorPagina);
-        this.carregandoInicial = false;
-      } catch (e) {
-        console.error('Erro ao restaurar cache:', e);
-      }
+    if (paginaSalva) {
+      this.paginaAtual = parseInt(paginaSalva);
+    }
+    if (categoriaSalva) {
+      this.categoriaSelecionada = categoriaSalva;
+    }
+    if (ordenacaoSalva) {
+      this.ordenacao = ordenacaoSalva;
     }
     
-    // Restaurar estado da página APENAS se estiver vindo de detalhes
-    if (vindoDeDetalhes === 'true') {
-      const paginaSalva = sessionStorage.getItem('todosProdutos_paginaAtual');
-      const categoriaSalva = sessionStorage.getItem('todosProdutos_categoriaSelecionada');
-      const ordenacaoSalva = sessionStorage.getItem('todosProdutos_ordenacao');
-      
-      if (paginaSalva) {
-        this.paginaAtual = parseInt(paginaSalva);
-      }
-      if (categoriaSalva) {
-        this.categoriaSelecionada = categoriaSalva;
-      }
-      if (ordenacaoSalva) {
-        this.ordenacao = ordenacaoSalva;
-      }
-      
-      // Limpar flag após usar
-      sessionStorage.removeItem('todosProdutos_vindoDeDetalhes');
-    } else {
-      // Se não está vindo de detalhes, limpar estados salvos
-      sessionStorage.removeItem('todosProdutos_paginaAtual');
-      sessionStorage.removeItem('todosProdutos_categoriaSelecionada');
-      sessionStorage.removeItem('todosProdutos_ordenacao');
-    }
-    
-    // Se não temos cache ou está vazio, carregar produtos
-    if (!this.produtosCache.length) {
-      const paginaParaCarregar = vindoDeDetalhes === 'true' && sessionStorage.getItem('todosProdutos_paginaAtual') 
-        ? parseInt(sessionStorage.getItem('todosProdutos_paginaAtual')) 
-        : 1;
-      await this.carregarProdutosPaginados(paginaParaCarregar);
-      this.carregandoInicial = false;
-    }
-    
+    this.carregarProdutosPaginados(1); // Carregar as primeiras 2 páginas
     this.getCategoria();
-    
-    // Desativar flag após restauração
-    this.isRestoringState = false;
   },
   watch: {
     paginaAtual(novaPagina) {
       // Verificar se precisa carregar mais produtos
       this.verificarCarregarMaisProdutos(novaPagina);
-    },
-    categoriaSelecionada() {
-      // Não resetar se estamos restaurando o estado salvo
-      if (this.isRestoringState) return;
-      
-      // Resetar para página 1 ao mudar de categoria
-      this.paginaAtual = 1;
-      
-      // Limpar estado salvo da página ao mudar categoria
-      sessionStorage.removeItem('todosProdutos_paginaAtual');
     },
     ordenacao() {
       switch (this.ordenacao) {
@@ -272,10 +215,6 @@ export default {
         this.produtosCache = response.data;
         this.totalProdutosServidor = response.data.length;
         this.paginaAtual = 1;
-        
-        // Limpar cache do sessionStorage durante busca
-        sessionStorage.removeItem('todosProdutos_cache');
-        sessionStorage.removeItem('todosProdutos_total');
       } catch (error) {
         console.error(error);
         alert("Erro ao carregar produtos. Tente novamente.");
@@ -292,16 +231,15 @@ export default {
         console.error(e);
       }
     },
-
     async carregarProdutosPaginados(paginaInicial) {
       if (this.carregandoProdutos) return;
       
       try {
         this.carregandoProdutos = true;
         
-        // Calcular quantos produtos carregar (mínimo 100 produtos ou 5 páginas)
+        // Carregar 2 páginas de uma vez
         const offset = (paginaInicial - 1) * this.produtosPorPagina;
-        const limit = this.produtosPorPagina * 5; // 5 páginas = 100 produtos para buffer maior
+        const limit = this.produtosPorPagina * 2; // 2 páginas = 40 produtos
         
         const response = await api.get(`/produtos?limit=${limit}&offset=${offset}`);
         
@@ -317,25 +255,19 @@ export default {
           
           this.paginasCarregadas = Math.ceil(this.produtosCache.length / this.produtosPorPagina);
           
-          // Obter total de produtos da resposta
+          // Se a resposta tiver informação sobre o total, usar
           if (response.data[1] && response.data[1].total) {
             this.totalProdutosServidor = response.data[1].total;
           } else {
-            // Estimar total baseado no que foi retornado
-            this.totalProdutosServidor = this.produtosCache.length;
-          }
-          
-          // Salvar cache no sessionStorage para carregamento rápido
-          try {
-            sessionStorage.setItem('todosProdutos_cache', JSON.stringify(this.produtosCache));
-            sessionStorage.setItem('todosProdutos_total', this.totalProdutosServidor.toString());
-          } catch (e) {
-            console.log('Não foi possível salvar cache:', e);
+            // Estimar o total baseado no que foi retornado
+            if (novosProdutos.length < limit) {
+              this.totalProdutosServidor = this.produtosCache.length;
+            }
           }
         }
       } catch (error) {
-        console.error('Erro ao carregar produtos paginados:', error);
-        // Fallback: carregar todos os produtos de uma vez
+        console.error(error);
+        // Se a API não suportar limit/offset, tentar o método antigo
         await this.getProdutosSemPaginacao();
       } finally {
         this.carregandoProdutos = false;
@@ -348,14 +280,6 @@ export default {
           this.produtosCache = response.data[0];
           this.totalProdutosServidor = this.produtosCache.length;
           this.paginasCarregadas = Math.ceil(this.produtosCache.length / this.produtosPorPagina);
-          
-          // Salvar cache no sessionStorage
-          try {
-            sessionStorage.setItem('todosProdutos_cache', JSON.stringify(this.produtosCache));
-            sessionStorage.setItem('todosProdutos_total', this.totalProdutosServidor.toString());
-          } catch (e) {
-            console.log('Não foi possível salvar cache:', e);
-          }
         }
       } catch (error) {
         console.error(error);
@@ -366,8 +290,8 @@ export default {
       // Se estamos na última página carregada ou próximo dela, carregar mais
       const paginasRestantes = this.paginasCarregadas - paginaAtual;
       
-      // Carregar mais quando estiver a 2 páginas do final do cache (mais antecipado)
-      if (paginasRestantes <= 2 && this.produtosCache.length < this.totalProdutosServidor) {
+      // Carregar mais quando estiver a 1 página do final do cache
+      if (paginasRestantes <= 1 && this.produtosCache.length < this.totalProdutosServidor) {
         this.carregarProdutosPaginados(this.paginasCarregadas + 1);
       }
     },
@@ -507,30 +431,10 @@ export default {
               </select>
             </div>
           </div>
-          <!-- Loading Skeleton -->
-          <div v-if="carregandoInicial" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4">
-            <div
-              v-for="i in 8"
-              :key="'skeleton-' + i"
-              class="bg-white rounded-xl overflow-hidden shadow-md animate-pulse"
-            >
-              <div class="w-full h-32 bg-gray-200 mt-5"></div>
-              <div class="p-4">
-                <div class="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div class="flex items-center justify-between pt-2">
-                  <div class="h-5 bg-gray-200 rounded w-20"></div>
-                  <div class="h-9 w-9 bg-gray-200 rounded-full"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Produtos reais -->
-          <div v-else class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4">
             <!-- Primeiro produto -->
             <div
-              v-for="produto in produtospaginação"
+              v-for="produto in produtosPaginação"
               :key="produto.id"
               class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
             >
