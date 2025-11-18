@@ -60,7 +60,7 @@ export default {
         currency: "BRL",
       });
     },
-    finalizarCompra() {
+    async finalizarCompra() {
       try {
         if (!this.carrinho || this.carrinho.length === 0) {
           this.openToast("Seu carrinho está vazio.");
@@ -105,8 +105,9 @@ export default {
 
        
 
+        // Calcula valor total usando a propriedade correta de quantidade (qtd)
         const valorTotal = itens.reduce(
-          (acc, it) => acc + it.preco * (Number(it.quantidade) || 1),
+          (acc, it) => acc + it.preco * (Number(it.qtd) || 1),
           0
         );
    
@@ -128,13 +129,14 @@ export default {
             .join(",")}
         ]}`;
 
-       api.post("/vendas", JSON.parse(jsonProdutos)).then((response) => {
-
+        // Aguarda o registro da venda para garantir que o Dashboard carregue a nova compra sem precisar de refresh manual
+        try {
+          const response = await api.post("/vendas", JSON.parse(jsonProdutos));
           console.log("Compra registrada com sucesso:", response.data);
-
-        }).catch((error) => {
+        } catch (error) {
           console.error("Erro ao registrar compra:", error);
-        });
+          // Continua fluxo mesmo em caso de erro para não bloquear usuário
+        }
 
         const agora = new Date();
         const compra = {

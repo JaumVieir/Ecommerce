@@ -50,6 +50,15 @@ export default {
               valorTotal: Number(c.valorTotal) || 0,
               itens: Array.isArray(c.produtos) ? c.produtos : [],
             }));
+            // Mescla compras armazenadas localmente (otimista) caso API ainda não tenha propagado a última compra
+            try {
+              const storageKey = `compras:${userId}`;
+              const localCompras = JSON.parse(localStorage.getItem(storageKey) || "[]");
+              const existingIds = new Set(this.compras.map(c => c.id));
+              localCompras.forEach(c => { if (!existingIds.has(c.id)) this.compras.unshift(c); });
+            } catch (e) {
+              console.error("Falha ao mesclar compras locais:", e);
+            }
 
           api.get(`/produtos/predicaoByCompras/${userId}`)
             .then((res) => {
