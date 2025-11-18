@@ -55,7 +55,7 @@ export default {
     },
   },
 
-  mounted() {
+  async mounted() {
     // Restaurar estado da página se existir
     const paginaSalva = sessionStorage.getItem('todosProdutos_paginaAtual');
     const categoriaSalva = sessionStorage.getItem('todosProdutos_categoriaSelecionada');
@@ -71,7 +71,9 @@ export default {
       this.ordenacao = ordenacaoSalva;
     }
     
-    this.carregarProdutosPaginados(1); // Carregar as primeiras 2 páginas
+    // Carregar produtos suficientes para a página atual
+    const paginaParaCarregar = paginaSalva ? parseInt(paginaSalva) : 1;
+    await this.carregarProdutosPaginados(paginaParaCarregar);
     this.getCategoria();
   },
   watch: {
@@ -231,15 +233,49 @@ export default {
         console.error(e);
       }
     },
+    async obterTotalProdutos() {
+      try {
+        // Tentar obter apenas a contagem total de forma eficiente
+        const response = await api.get('/produtos/count');
+        if (response.data && response.data.total) {
+          this.totalProdutosServidor = response.data.total;
+          return;
+        }
+      } catch (e) {
+        console.log('Endpoint /count não disponível');
+      }
+      
+      // Fallback: usar o primeiro carregamento para determinar o total
+      try {
+        const response = await api.get('/produtos?limit=1&offset=0');
+        if (response.data && response.data[1] && response.data[1].total) {
+          this.totalProdutosServidor = response.data[1].total;
+        }
+      } catch (e) {
+        console.error('Não foi possível obter o total de produtos', e);
+      }
+    },
     async carregarProdutosPaginados(paginaInicial) {
       if (this.carregandoProdutos) return;
       
       try {
         this.carregandoProdutos = true;
         
-        // Carregar 2 páginas de uma vez
+        // Primeiro, obter o total de produtos se ainda não temos
+        if (this.totalProdutosServidor === 0) {
+          try {
+            const countResponse = await api.get('/produtos/count');
+            if (countResponse.data && countResponse.data.total) {
+              this.totalProdutosServidor = countResponse.data.total;
+            }
+          } catch (e) {
+            console.log('Endpoint /produtos/count não disponível, usando fallback');
+          }
+        }
+        
+        // Carregar apenas o necessário para mostrar a página atual + 1 extra
         const offset = (paginaInicial - 1) * this.produtosPorPagina;
-        const limit = this.produtosPorPagina * 2; // 2 páginas = 40 produtos
+        const limit = this.produtosPorPagina * 2; // 2 páginas para buffer
         
         const response = await api.get(`/produtos?limit=${limit}&offset=${offset}`);
         
@@ -255,14 +291,12 @@ export default {
           
           this.paginasCarregadas = Math.ceil(this.produtosCache.length / this.produtosPorPagina);
           
-          // Se a resposta tiver informação sobre o total, usar
+          // Obter total de produtos da resposta
           if (response.data[1] && response.data[1].total) {
             this.totalProdutosServidor = response.data[1].total;
-          } else {
-            // Estimar o total baseado no que foi retornado
-            if (novosProdutos.length < limit) {
-              this.totalProdutosServidor = this.produtosCache.length;
-            }
+          } else if (this.totalProdutosServidor === 0) {
+            // Se ainda não temos o total, fazer fallback
+            await this.getProdutosSemPaginacao();
           }
         }
       } catch (error) {
