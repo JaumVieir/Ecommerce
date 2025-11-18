@@ -7,8 +7,12 @@ export default {
   data() {
     return {
       produtos: [],
+      produtosCache: [], // Cache completo dos produtos carregados
+      totalProdutosServidor: 0, // Total de produtos no servidor
       paginaAtual: 1,
       produtosPorPagina: 20,
+      paginasCarregadas: 0, // Quantas páginas já foram carregadas
+      carregandoProdutos: false, // Flag para evitar requisições duplicadas
       pesquisar: "",
       ordenacao: "",
       categorias: " ",
@@ -22,16 +26,18 @@ export default {
 
   computed: {
     produtosFiltrados() {
+      let produtosParaFiltrar = this.produtosCache;
+      
       if (
         this.categoriaSelecionada &&
         this.categoriaSelecionada !== "" &&
         this.categoriaSelecionada !== "Todas as Categorias"
       ) {
-        return this.produtos.filter(
+        return produtosParaFiltrar.filter(
           (p) => p.category === this.categoriaSelecionada
         );
       } else {
-        return this.produtos;
+        return produtosParaFiltrar;
       }
     },
     produtosPaginação() {
@@ -40,32 +46,44 @@ export default {
       return this.produtosFiltrados.slice(inicio, fim);
     },
     totalPaginas() {
-      return Math.ceil(this.produtosFiltrados.length / this.produtosPorPagina);
+      // Se estamos filtrando por categoria, usar o total filtrado
+      if (this.categoriaSelecionada && this.categoriaSelecionada !== "" && this.categoriaSelecionada !== "Todas as Categorias") {
+        return Math.ceil(this.produtosFiltrados.length / this.produtosPorPagina);
+      }
+      // Caso contrário, usar o total do servidor
+      return Math.ceil(this.totalProdutosServidor / this.produtosPorPagina);
     },
   },
 
   mounted() {
-    this.getProdutos();
+    this.carregarProdutosPaginados(1); // Carregar as primeiras 2 páginas
     this.getCategoria();
   },
   watch: {
+    paginaAtual(novaPagina) {
+      // Verificar se precisa carregar mais produtos
+      this.verificarCarregarMaisProdutos(novaPagina);
+    },
     ordenacao() {
       switch (this.ordenacao) {
         case "1":
-          this.produtos.sort(
+          this.produtosCache.sort(
             (a, b) => parseFloat(a.actual_price) - parseFloat(b.actual_price)
           );
           break;
         case "2":
-          this.produtos.sort(
+          this.produtosCache.sort(
             (a, b) => parseFloat(b.actual_price) - parseFloat(a.actual_price)
           );
           break;
         case "3":
-          this.produtos.sort((a, b) => b.rating_count - a.rating_count);
+          this.produtosCache.sort((a, b) => b.rating_count - a.rating_count);
           break;
         default:
-          this.getProdutos();
+          // Recarregar produtos na ordem padrão
+          this.produtosCache = [];
+          this.paginasCarregadas = 0;
+          this.carregarProdutosPaginados(1);
           break;
       }
     },
@@ -73,7 +91,11 @@ export default {
       if (novoValor.length >= 2) {
         this.buscarProdutos(novoValor);
       } else {
-        this.getProdutos();
+        // Resetar para o cache original
+        this.produtosCache = [];
+        this.paginasCarregadas = 0;
+        this.paginaAtual = 1;
+        this.carregarProdutosPaginados(1);
       }
     },
   },
@@ -174,7 +196,10 @@ export default {
         const response = await api.get(
           `/produtos/getByTexto/${texto}`
         );
-        this.produtos = response.data;
+        // Ao buscar, substituir o cache com os resultados da busca
+        this.produtosCache = response.data;
+        this.totalProdutosServidor = response.data.length;
+        this.paginaAtual = 1;
       } catch (error) {
         console.error(error);
         alert("Erro ao carregar produtos. Tente novamente.");
@@ -191,15 +216,68 @@ export default {
         console.error(e);
       }
     },
-    async getProdutos() {
+    async carregarProdutosPaginados(paginaInicial) {
+      if (this.carregandoProdutos) return;
+      
+      try {
+        this.carregandoProdutos = true;
+        
+        // Carregar 2 páginas de uma vez
+        const offset = (paginaInicial - 1) * this.produtosPorPagina;
+        const limit = this.produtosPorPagina * 2; // 2 páginas = 40 produtos
+        
+        const response = await api.get(`/produtos?limit=${limit}&offset=${offset}`);
+        
+        if (response.data && response.data[0]) {
+          const novosProdutos = response.data[0];
+          
+          // Adicionar ao cache apenas produtos que ainda não existem
+          novosProdutos.forEach(produto => {
+            if (!this.produtosCache.find(p => p.product_id === produto.product_id)) {
+              this.produtosCache.push(produto);
+            }
+          });
+          
+          this.paginasCarregadas = Math.ceil(this.produtosCache.length / this.produtosPorPagina);
+          
+          // Se a resposta tiver informação sobre o total, usar
+          if (response.data[1] && response.data[1].total) {
+            this.totalProdutosServidor = response.data[1].total;
+          } else {
+            // Estimar o total baseado no que foi retornado
+            if (novosProdutos.length < limit) {
+              this.totalProdutosServidor = this.produtosCache.length;
+            }
+          }
+        }
+      } catch (error) {
+        console.error(error);
+        // Se a API não suportar limit/offset, tentar o método antigo
+        await this.getProdutosSemPaginacao();
+      } finally {
+        this.carregandoProdutos = false;
+      }
+    },
+    async getProdutosSemPaginacao() {
       try {
         const response = await api.get("/produtos");
-        console.log(response.data);
-        this.produtos = response.data[0];
-        console.log(this.produtos);
+        if (response.data && response.data[0]) {
+          this.produtosCache = response.data[0];
+          this.totalProdutosServidor = this.produtosCache.length;
+          this.paginasCarregadas = Math.ceil(this.produtosCache.length / this.produtosPorPagina);
+        }
       } catch (error) {
         console.error(error);
         alert("Erro ao carregar produtos. Tente novamente.");
+      }
+    },
+    verificarCarregarMaisProdutos(paginaAtual) {
+      // Se estamos na última página carregada ou próximo dela, carregar mais
+      const paginasRestantes = this.paginasCarregadas - paginaAtual;
+      
+      // Carregar mais quando estiver a 1 página do final do cache
+      if (paginasRestantes <= 1 && this.produtosCache.length < this.totalProdutosServidor) {
+        this.carregarProdutosPaginados(this.paginasCarregadas + 1);
       }
     },
     async verDetalhes(produto) {
@@ -453,14 +531,15 @@ export default {
         </div>
       </footer>
     </div>
-  </div>
-  <!-- Toast simples -->
-  <div
-    v-if="toastVisible"
-    class="fixed top-4 right-4 z-50 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg"
-    role="status"
-    aria-live="polite"
-  >
-    {{ toastMessage }}
+
+    <!-- Toast simples -->
+    <div
+      v-if="toastVisible"
+      class="fixed top-4 right-4 z-50 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg"
+      role="status"
+      aria-live="polite"
+    >
+      {{ toastMessage }}
+    </div>
   </div>
 </template>
