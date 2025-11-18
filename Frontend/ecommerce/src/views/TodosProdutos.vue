@@ -64,6 +64,9 @@ export default {
     // Ativar flag de restauração
     this.isRestoringState = true;
     
+    // Verificar se está vindo da página de detalhes
+    const vindoDeDetalhes = sessionStorage.getItem('todosProdutos_vindoDeDetalhes');
+    
     // Tentar restaurar cache de produtos do sessionStorage
     const cacheStr = sessionStorage.getItem('todosProdutos_cache');
     const totalStr = sessionStorage.getItem('todosProdutos_total');
@@ -79,24 +82,36 @@ export default {
       }
     }
     
-    // Restaurar estado da página se existir
-    const paginaSalva = sessionStorage.getItem('todosProdutos_paginaAtual');
-    const categoriaSalva = sessionStorage.getItem('todosProdutos_categoriaSelecionada');
-    const ordenacaoSalva = sessionStorage.getItem('todosProdutos_ordenacao');
-    
-    if (paginaSalva) {
-      this.paginaAtual = parseInt(paginaSalva);
-    }
-    if (categoriaSalva) {
-      this.categoriaSelecionada = categoriaSalva;
-    }
-    if (ordenacaoSalva) {
-      this.ordenacao = ordenacaoSalva;
+    // Restaurar estado da página APENAS se estiver vindo de detalhes
+    if (vindoDeDetalhes === 'true') {
+      const paginaSalva = sessionStorage.getItem('todosProdutos_paginaAtual');
+      const categoriaSalva = sessionStorage.getItem('todosProdutos_categoriaSelecionada');
+      const ordenacaoSalva = sessionStorage.getItem('todosProdutos_ordenacao');
+      
+      if (paginaSalva) {
+        this.paginaAtual = parseInt(paginaSalva);
+      }
+      if (categoriaSalva) {
+        this.categoriaSelecionada = categoriaSalva;
+      }
+      if (ordenacaoSalva) {
+        this.ordenacao = ordenacaoSalva;
+      }
+      
+      // Limpar flag após usar
+      sessionStorage.removeItem('todosProdutos_vindoDeDetalhes');
+    } else {
+      // Se não está vindo de detalhes, limpar estados salvos
+      sessionStorage.removeItem('todosProdutos_paginaAtual');
+      sessionStorage.removeItem('todosProdutos_categoriaSelecionada');
+      sessionStorage.removeItem('todosProdutos_ordenacao');
     }
     
     // Se não temos cache ou está vazio, carregar produtos
     if (!this.produtosCache.length) {
-      const paginaParaCarregar = paginaSalva ? parseInt(paginaSalva) : 1;
+      const paginaParaCarregar = vindoDeDetalhes === 'true' && sessionStorage.getItem('todosProdutos_paginaAtual') 
+        ? parseInt(sessionStorage.getItem('todosProdutos_paginaAtual')) 
+        : 1;
       await this.carregarProdutosPaginados(paginaParaCarregar);
       this.carregandoInicial = false;
     }
@@ -277,49 +292,16 @@ export default {
         console.error(e);
       }
     },
-    async obterTotalProdutos() {
-      try {
-        // Tentar obter apenas a contagem total de forma eficiente
-        const response = await api.get('/produtos/count');
-        if (response.data && response.data.total) {
-          this.totalProdutosServidor = response.data.total;
-          return;
-        }
-      } catch (e) {
-        console.log('Endpoint /count não disponível');
-      }
-      
-      // Fallback: usar o primeiro carregamento para determinar o total
-      try {
-        const response = await api.get('/produtos?limit=1&offset=0');
-        if (response.data && response.data[1] && response.data[1].total) {
-          this.totalProdutosServidor = response.data[1].total;
-        }
-      } catch (e) {
-        console.error('Não foi possível obter o total de produtos', e);
-      }
-    },
+
     async carregarProdutosPaginados(paginaInicial) {
       if (this.carregandoProdutos) return;
       
       try {
         this.carregandoProdutos = true;
         
-        // Primeiro, obter o total de produtos se ainda não temos
-        if (this.totalProdutosServidor === 0) {
-          try {
-            const countResponse = await api.get('/produtos/count');
-            if (countResponse.data && countResponse.data.total) {
-              this.totalProdutosServidor = countResponse.data.total;
-            }
-          } catch (e) {
-            console.log('Endpoint /produtos/count não disponível, usando fallback');
-          }
-        }
-        
-        // Carregar apenas o necessário para mostrar a página atual + 1 extra
+        // Calcular quantos produtos carregar (mínimo 100 produtos ou 5 páginas)
         const offset = (paginaInicial - 1) * this.produtosPorPagina;
-        const limit = this.produtosPorPagina * 2; // 2 páginas para buffer
+        const limit = this.produtosPorPagina * 5; // 5 páginas = 100 produtos para buffer maior
         
         const response = await api.get(`/produtos?limit=${limit}&offset=${offset}`);
         
@@ -338,9 +320,9 @@ export default {
           // Obter total de produtos da resposta
           if (response.data[1] && response.data[1].total) {
             this.totalProdutosServidor = response.data[1].total;
-          } else if (this.totalProdutosServidor === 0) {
-            // Se ainda não temos o total, fazer fallback
-            await this.getProdutosSemPaginacao();
+          } else {
+            // Estimar total baseado no que foi retornado
+            this.totalProdutosServidor = this.produtosCache.length;
           }
           
           // Salvar cache no sessionStorage para carregamento rápido
@@ -352,8 +334,8 @@ export default {
           }
         }
       } catch (error) {
-        console.error(error);
-        // Se a API não suportar limit/offset, tentar o método antigo
+        console.error('Erro ao carregar produtos paginados:', error);
+        // Fallback: carregar todos os produtos de uma vez
         await this.getProdutosSemPaginacao();
       } finally {
         this.carregandoProdutos = false;
@@ -366,6 +348,14 @@ export default {
           this.produtosCache = response.data[0];
           this.totalProdutosServidor = this.produtosCache.length;
           this.paginasCarregadas = Math.ceil(this.produtosCache.length / this.produtosPorPagina);
+          
+          // Salvar cache no sessionStorage
+          try {
+            sessionStorage.setItem('todosProdutos_cache', JSON.stringify(this.produtosCache));
+            sessionStorage.setItem('todosProdutos_total', this.totalProdutosServidor.toString());
+          } catch (e) {
+            console.log('Não foi possível salvar cache:', e);
+          }
         }
       } catch (error) {
         console.error(error);
@@ -376,8 +366,8 @@ export default {
       // Se estamos na última página carregada ou próximo dela, carregar mais
       const paginasRestantes = this.paginasCarregadas - paginaAtual;
       
-      // Carregar mais quando estiver a 1 página do final do cache
-      if (paginasRestantes <= 1 && this.produtosCache.length < this.totalProdutosServidor) {
+      // Carregar mais quando estiver a 2 páginas do final do cache (mais antecipado)
+      if (paginasRestantes <= 2 && this.produtosCache.length < this.totalProdutosServidor) {
         this.carregarProdutosPaginados(this.paginasCarregadas + 1);
       }
     },

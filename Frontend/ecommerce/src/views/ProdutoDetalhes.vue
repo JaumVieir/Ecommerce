@@ -283,6 +283,13 @@ export default {
     window.scrollTo(0, 0);
     this.getProduto();
   },
+  beforeUnmount() {
+    // Limpar flag ao sair da página de detalhes se não estiver voltando para TodosProdutos
+    const currentPath = this.$route.path;
+    if (!currentPath.includes('/produto/')) {
+      sessionStorage.removeItem('todosProdutos_vindoDeDetalhes');
+    }
+  },
   methods: {
     formataData() {
       const data = new Date();
@@ -448,6 +455,8 @@ export default {
       });
     },
     voltarParaProdutos() {
+      // Marcar que está voltando de detalhes
+      sessionStorage.setItem('todosProdutos_vindoDeDetalhes', 'true');
       // Voltar para a página de produtos (o estado será restaurado automaticamente)
       this.$router.push({ path: "/" });
     },
