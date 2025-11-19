@@ -116,6 +116,16 @@ export default {
         this.carregarPagina(1);
       }
     },
+    '$route'(to, from) {
+      // Se navegou para esta página (de qualquer outra página), recarrega página 1
+      if (to.path === '/' && from.path !== '/') {
+        this.paginaAtual = 1;
+        this.pesquisar = "";
+        this.categoriaSelecionada = "";
+        this.ordenacao = "";
+        this.carregarPagina(1);
+      }
+    },
   },
 
   methods: {
