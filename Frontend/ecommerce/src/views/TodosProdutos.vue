@@ -15,8 +15,8 @@ export default {
       ordenacao: "",
       categorias: [],
       categoriaSelecionada: "",
-  // timer para debounce da busca
-  searchTimer: null,
+      // timer para debounce da busca
+      searchTimer: null,
       // Toast simples para feedback de adição ao carrinho
       toastVisible: false,
       toastMessage: "",
@@ -27,23 +27,32 @@ export default {
   },
 
   computed: {
-    // Se desejar, o filtro por categoria ainda é aplicado no cliente
     produtosFiltrados() {
+      let lista = this.produtos;
+
+      // filtro por categoria
       if (
         this.categoriaSelecionada &&
         this.categoriaSelecionada !== "" &&
         this.categoriaSelecionada !== "Todas as Categorias"
       ) {
-        return this.produtos.filter((p) => p.category === this.categoriaSelecionada);
+        lista = lista.filter((p) => p.category === this.categoriaSelecionada);
       }
-      return this.produtos;
+
+      // filtro por texto da busca (nome / descrição)
+      if (this.pesquisar && this.pesquisar.length >= 2) {
+        const termo = this.pesquisar.toLowerCase();
+        lista = lista.filter((p) => {
+          const nome = (p.product_name || "").toLowerCase();
+          const desc = (p.descricao || "").toLowerCase();
+          return nome.includes(termo) || desc.includes(termo);
+        });
+      }
+
+      return lista;
     },
-    // Como agora o servidor deve devolver a página já paginada, retornamos diretamente
     produtosPaginação() {
       return this.produtosFiltrados;
-    },
-    totalPaginas() {
-      return Math.max(1, Math.ceil((this.totalProdutosServidor || 0) / this.produtosPorPagina));
     },
   },
 
@@ -63,7 +72,7 @@ export default {
     // Carrega a página inicial (watcher também reagirá a mudanças posteriores)
     await this.carregarPagina(this.paginaAtual);
     this.getCategoria();
-    
+
 
   },
 
@@ -90,9 +99,16 @@ export default {
       // do botão já chamam carregarPagina diretamente.
     },
     ordenacao() {
-      // Simples: recarrega a página quando a ordenação muda. Você pode adaptar para passar um parâmetro ao endpoint.
-      this.carregarPagina(1);
+      const pagina = 1;
+      this.paginaAtual = pagina;
+      const endpoint = this.buildProdutosEndpoint(pagina, {
+        search: this.pesquisar,
+        categoria: this.categoriaSelecionada,
+        ordenacao: this.ordenacao,
+      });
+      this.carregarPagina(pagina, endpoint);
     },
+
     pesquisar(novoValor) {
       if (novoValor.length >= 2) {
         this.buscarProdutos(novoValor);
@@ -205,10 +221,10 @@ export default {
       this.mostrandoProdutos = false;
       try {
         const endpoint = endpointArg || this.buildProdutosEndpoint(pagina);
-  console.debug('[TodosProdutos] carregarPagina -> pagina:', pagina, 'endpoint:', endpoint);
-  const response = await api.get(endpoint);
-  console.debug('[TodosProdutos] carregarPagina -> response status:', response && response.status);
-  console.debug('[TodosProdutos] carregarPagina -> response.data (preview):', response && response.data && (Array.isArray(response.data) ? `array(${response.data.length})` : typeof response.data));
+        console.debug('[TodosProdutos] carregarPagina -> pagina:', pagina, 'endpoint:', endpoint);
+        const response = await api.get(endpoint);
+        console.debug('[TodosProdutos] carregarPagina -> response status:', response && response.status);
+        console.debug('[TodosProdutos] carregarPagina -> response.data (preview):', response && response.data && (Array.isArray(response.data) ? `array(${response.data.length})` : typeof response.data));
 
         // Aceitar múltiplos formatos de resposta para facilitar a integração:
         // 1) { products: [...], total: 123 }
@@ -264,7 +280,7 @@ export default {
             }
           }
         }
-  console.debug('[TodosProdutos] carregarPagina -> produtos carregados:', Array.isArray(this.produtos) ? this.produtos.length : 0, 'ex:', this.produtos && this.produtos[0]);
+        console.debug('[TodosProdutos] carregarPagina -> produtos carregados:', Array.isArray(this.produtos) ? this.produtos.length : 0, 'ex:', this.produtos && this.produtos[0]);
         this.mostrandoProdutos = true;
       } catch (error) {
         console.error('Erro ao carregar produtos paginados:', error);
@@ -379,43 +395,23 @@ export default {
             <div class="hidden md:flex items-center space-x-8"></div>
             <div class="flex items-center space-x-4">
               <div class="relative">
-                <input
-                  v-model="pesquisar"
-                  type="text"
-                  placeholder="Search products..."
-                  class="py-2 pl-10 pr-4 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-                <span
-                  class="material-symbols-outlined absolute left-3 top-2 text-gray-400"
-                  >search</span
-                >
+                <input v-model="pesquisar" type="text" placeholder="Search products..."
+                  class="py-2 pl-10 pr-4 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
+                <span class="material-symbols-outlined absolute left-3 top-2 text-gray-400">search</span>
               </div>
               <div class="flex items-center gap-2">
-                <router-link
-                  to="/Carrinho"
+                <router-link to="/Carrinho"
                   class="p-2 rounded-full hover:bg-gray-100 transition duration-300 relative flex items-center"
-                  style="text-decoration: none !important"
-                >
-                  <span class="material-symbols-outlined text-primary-600"
-                    >shopping_cart</span
-                  >
+                  style="text-decoration: none !important">
+                  <span class="material-symbols-outlined text-primary-600">shopping_cart</span>
                 </router-link>
-                <button
-                  class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
-                  style="text-decoration: none !important"
-                  @click="irParaDashboardOuLogin"
-                >
-                  <span class="material-symbols-outlined text-primary-600"
-                    >person</span
-                  >
+                <button class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
+                  style="text-decoration: none !important" @click="irParaDashboardOuLogin">
+                  <span class="material-symbols-outlined text-primary-600">person</span>
                 </button>
-                <button
-                  class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
-                  @click="logout"
-                >
-                  <span class="material-symbols-outlined text-red-600"
-                    >logout</span
-                  >
+                <button class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
+                  @click="logout">
+                  <span class="material-symbols-outlined text-red-600">logout</span>
                 </button>
               </div>
             </div>
@@ -431,10 +427,8 @@ export default {
 
             <!--Filtro de Categoria-->
             <div class="flex space-x-2">
-              <select
-                v-model="categoriaSelecionada"
-                class="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
+              <select v-model="categoriaSelecionada"
+                class="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary-500">
                 <option value="">Todas as Categorias</option>
                 <option v-for="cat in categorias" :key="cat" :value="cat">
                   {{ cat }}
@@ -443,10 +437,8 @@ export default {
             </div>
 
             <div class="flex space-x-2">
-              <select
-                v-model="ordenacao"
-                class="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
+              <select v-model="ordenacao"
+                class="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary-500">
                 <option value="">Ordernar Por</option>
                 <option value="1">Mais Barato</option>
                 <option value="2">Mais Caro</option>
@@ -454,69 +446,45 @@ export default {
               </select>
             </div>
           </div>
-          
+
           <!-- Loading Spinner -->
           <div v-if="!mostrandoProdutos" class="flex justify-center items-center py-20">
             <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-primary-600"></div>
           </div>
-          
+
           <div v-else class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4">
             <!-- Primeiro produto -->
-            <div
-              v-for="produto in produtosPaginação"
-              :key="produto.product_id || produto.id"
-              class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
-            >
-              <div
-                class="relative w-full h-32 bg-white flex items-center justify-center overflow-hidden mt-5"
-              >
-                <img
-                  :src="produto.img_link"
-                  alt="SAMSUNG Smart TV Crystal 50"
-                  class="object-contain h-full max-w-full"
-                  keywords="SAMSUNG Smart TV Crystal 50, TV, electronics, ecommerce"
-                />
+            <div v-for="produto in produtosPaginação" :key="produto.product_id || produto.id"
+              class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group">
+              <div class="relative w-full h-32 bg-white flex items-center justify-center overflow-hidden mt-5">
+                <img :src="produto.img_link" alt="SAMSUNG Smart TV Crystal 50" class="object-contain h-full max-w-full"
+                  keywords="SAMSUNG Smart TV Crystal 50, TV, electronics, ecommerce" />
                 <div class="absolute top-3 right-3 flex flex-col gap-2">
                   <button
-                    class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0"
-                  >
-                    <span class="material-symbols-outlined text-gray-700"
-                      >favorite</span
-                    >
+                    class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0">
+                    <span class="material-symbols-outlined text-gray-700">favorite</span>
                   </button>
                   <button
-                    class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-75"
-                  >
-                    <span class="material-symbols-outlined text-gray-700"
-                      >visibility</span
-                    >
+                    class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-75">
+                    <span class="material-symbols-outlined text-gray-700">visibility</span>
                   </button>
                   <button
-                    class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-150"
-                  >
-                    <span class="material-symbols-outlined text-gray-700"
-                      >share</span
-                    >
+                    class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition duration-300 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 delay-150">
+                    <span class="material-symbols-outlined text-gray-700">share</span>
                   </button>
                 </div>
               </div>
               <div class="p-4">
                 <div class="flex items-center mb-2">
                   <div class="flex">
-                    <span
-                      v-for="(tipo, idx) in getStars(produto.rating)"
-                      :key="idx"
-                      class="material-symbols-outlined text-sm"
-                      :class="
-                        tipo === 'empty' ? 'text-gray-300' : 'text-yellow-500'
-                      "
-                      :style="{
-                        'font-variation-settings':
-                          tipo === 'full' || tipo === 'half'
-                            ? `'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20`
-                            : `'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20`,
-                      }"
-                    >
+                    <span v-for="(tipo, idx) in getStars(produto.rating)" :key="idx"
+                      class="material-symbols-outlined text-sm" :class="tipo === 'empty' ? 'text-gray-300' : 'text-yellow-500'
+                        " :style="{
+                          'font-variation-settings':
+                            tipo === 'full' || tipo === 'half'
+                              ? `'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20`
+                              : `'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20`,
+                        }">
                       {{ tipo === "half" ? "star_half" : "star" }}
                     </span>
                   </div>
@@ -526,8 +494,7 @@ export default {
                 </div>
                 <h3
                   class="font-medium text-base mb-1 hover:text-primary-600 transition duration-300 text-truncate cursor-pointer"
-                  @click="verDetalhes(produto)"
-                >
+                  @click="verDetalhes(produto)">
                   {{ produto.product_name }}
                 </h3>
                 <div class="flex items-center justify-between">
@@ -536,41 +503,25 @@ export default {
                       formataPreco(produto.actual_price)
                     }}</span>
                   </div>
-                  <button
-                    class="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition duration-300"
-                    @click="addAoCarrinho(produto)"
-                  >
-                    <span class="material-symbols-outlined text-primary-600"
-                      >add_shopping_cart</span
-                    >
+                  <button class="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition duration-300"
+                    @click="addAoCarrinho(produto)">
+                    <span class="material-symbols-outlined text-primary-600">add_shopping_cart</span>
                   </button>
                 </div>
               </div>
             </div>
           </div>
-            <div class="mt-12 flex justify-center px-4">
+          <div class="mt-12 flex justify-center px-4">
             <div class="flex items-center space-x-2">
-              <button
-                ref="btnPrev"
-                id="btn-prev"
-                class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-                @click="handlePrev"
-                style="pointer-events:auto; z-index:50"
-                aria-label="Anterior"
-              >
+              <button ref="btnPrev" id="btn-prev" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                @click="handlePrev" style="pointer-events:auto; z-index:50" aria-label="Anterior">
                 Anterior
               </button>
 
               <span>Página {{ paginaAtual }} de {{ totalPaginas }}</span>
 
-              <button
-                ref="btnNext"
-                id="btn-next"
-                class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-                @click="handleNext"
-                style="pointer-events:auto; z-index:50"
-                aria-label="Próxima"
-              >
+              <button ref="btnNext" id="btn-next" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                @click="handleNext" style="pointer-events:auto; z-index:50" aria-label="Próxima">
                 Próxima
               </button>
             </div>
@@ -588,12 +539,8 @@ export default {
     </div>
 
     <!-- Toast simples -->
-    <div
-      v-if="toastVisible"
-      class="fixed top-4 right-4 z-50 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg"
-      role="status"
-      aria-live="polite"
-    >
+    <div v-if="toastVisible" class="fixed top-4 right-4 z-50 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg"
+      role="status" aria-live="polite">
       {{ toastMessage }}
     </div>
   </div>
