@@ -27,10 +27,22 @@ export default {
   },
 
   computed: {
-    produtosPaginação() {
-      return this.produtosFiltrados;
-    },
+  // por enquanto, só repassa o que veio do servidor
+  produtosFiltrados() {
+    return this.produtos;
   },
+
+  produtosPaginação() {
+    return this.produtosFiltrados;
+  },
+
+  totalPaginas() {
+    return Math.max(
+      1,
+      Math.ceil((this.totalProdutosServidor || 0) / this.produtosPorPagina)
+    );
+  },
+},
 
   async mounted() {
     // Inicializa a página a partir de uma propriedade global (se existir) ou sessionStorage
