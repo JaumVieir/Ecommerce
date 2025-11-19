@@ -21,6 +21,9 @@ export default {
       toastVisible: false,
       toastMessage: "",
       toastTimer: null,
+      // Flags internas
+      isRestoringState: false,
+      carregandoInicial: true,
     };
   },
 
@@ -56,47 +59,63 @@ export default {
   },
 
   async mounted() {
-    // Ativar flag de restauração
-    this.isRestoringState = true;
-    
-    // Tentar restaurar cache de produtos do sessionStorage
-    const cacheStr = sessionStorage.getItem('todosProdutos_cache');
-    const totalStr = sessionStorage.getItem('todosProdutos_total');
-    
-    if (cacheStr && totalStr) {
-      try {
-        this.produtosCache = JSON.parse(cacheStr);
-        this.totalProdutosServidor = parseInt(totalStr);
-        this.paginasCarregadas = Math.ceil(this.produtosCache.length / this.produtosPorPagina);
-        this.carregandoInicial = false;
-      } catch (e) {
-        console.error('Erro ao restaurar cache:', e);
+    // Adicionar listener para capturar reload real da aba
+    window.addEventListener('beforeunload', this.handleBeforeUnload);
+
+    const vindoDeDetalhes = sessionStorage.getItem('todosProdutos_vindoDeDetalhes') === 'true';
+    const isReloadFlag = sessionStorage.getItem('todosProdutos_isReload') === 'true';
+
+    // Critério de restauração: somente se veio da página de detalhes ou se houve reload
+    const deveRestaurar = vindoDeDetalhes || isReloadFlag;
+    this.isRestoringState = deveRestaurar;
+
+    if (deveRestaurar) {
+      // Restaurar cache (para desempenho) se existir
+      const cacheStr = sessionStorage.getItem('todosProdutos_cache');
+      const totalStr = sessionStorage.getItem('todosProdutos_total');
+      if (cacheStr && totalStr) {
+        try {
+          this.produtosCache = JSON.parse(cacheStr);
+          this.totalProdutosServidor = parseInt(totalStr);
+          this.paginasCarregadas = Math.ceil(this.produtosCache.length / this.produtosPorPagina);
+          this.carregandoInicial = false;
+        } catch (e) {
+          console.error('Erro ao restaurar cache:', e);
+        }
       }
+      // Restaurar pagina / filtros
+      const paginaSalva = sessionStorage.getItem('todosProdutos_paginaAtual');
+      const categoriaSalva = sessionStorage.getItem('todosProdutos_categoriaSelecionada');
+      const ordenacaoSalva = sessionStorage.getItem('todosProdutos_ordenacao');
+      if (paginaSalva) this.paginaAtual = parseInt(paginaSalva);
+      if (categoriaSalva) this.categoriaSelecionada = categoriaSalva;
+      if (ordenacaoSalva) this.ordenacao = ordenacaoSalva;
+    } else {
+      // Garantir estado limpo caso tenha sobrado algo de navegação anterior não autorizada
+      this.limparEstadoSalvo();
     }
-    
-    // Restaurar estado da página se existir
-    const paginaSalva = sessionStorage.getItem('todosProdutos_paginaAtual');
-    const categoriaSalva = sessionStorage.getItem('todosProdutos_categoriaSelecionada');
-    const ordenacaoSalva = sessionStorage.getItem('todosProdutos_ordenacao');
-    
-    if (paginaSalva) {
-      this.paginaAtual = parseInt(paginaSalva);
-    }
-    if (categoriaSalva) {
-      this.categoriaSelecionada = categoriaSalva;
-    }
-    if (ordenacaoSalva) {
-      this.ordenacao = ordenacaoSalva;
-    }
-    
-    // Se não temos cache ou está vazio, carregar produtos
+
+    // Se não há cache, carrega normalmente a partir da página atual (padrão 1 ou restaurada)
     if (!this.produtosCache.length) {
-      const paginaParaCarregar = paginaSalva ? parseInt(paginaSalva) : 1;
-      await this.carregarProdutosPaginados(paginaParaCarregar);
+      await this.carregarProdutosPaginados(this.paginaAtual);
       this.carregandoInicial = false;
     }
-    
+
+    // Remover flags usadas (exceto cache) para não restaurar indevidamente em futuras visitas
+    sessionStorage.removeItem('todosProdutos_vindoDeDetalhes');
+    sessionStorage.removeItem('todosProdutos_isReload');
+
     this.getCategoria();
+  },
+  beforeUnmount() {
+    window.removeEventListener('beforeunload', this.handleBeforeUnload);
+  },
+  beforeRouteLeave(to, from, next) {
+    // Se a navegação for para detalhes, mantém estado. Caso contrário, limpa.
+    if (!to.path.startsWith('/produto/')) {
+      this.limparEstadoSalvo();
+    }
+    next();
   },
   watch: {
     paginaAtual(novaPagina) {
@@ -352,10 +371,11 @@ export default {
       };
 
       try {
-        // Salvar estado da página atual antes de navegar
-        sessionStorage.setItem('todosProdutos_paginaAtual', this.paginaAtual);
-        sessionStorage.setItem('todosProdutos_categoriaSelecionada', this.categoriaSelecionada);
-        sessionStorage.setItem('todosProdutos_ordenacao', this.ordenacao);
+        // Salvar estado da página atual antes de navegar PARA detalhes
+        sessionStorage.setItem('todosProdutos_paginaAtual', String(this.paginaAtual));
+        sessionStorage.setItem('todosProdutos_categoriaSelecionada', this.categoriaSelecionada || '');
+        sessionStorage.setItem('todosProdutos_ordenacao', this.ordenacao || '');
+        sessionStorage.setItem('todosProdutos_vindoDeDetalhes', 'true');
         
         const resposta = await api.post(
           `/usuarios/setClique`,
@@ -379,6 +399,21 @@ export default {
     logout() {
       localStorage.removeItem("auth");
       this.$router.push({ path: "/login" });
+    },
+    handleBeforeUnload() {
+      // Salva somente page/filtros se realmente recarregar/fechar aba
+      sessionStorage.setItem('todosProdutos_paginaAtual', String(this.paginaAtual));
+      sessionStorage.setItem('todosProdutos_categoriaSelecionada', this.categoriaSelecionada || '');
+      sessionStorage.setItem('todosProdutos_ordenacao', this.ordenacao || '');
+      // Marcar que o próximo load é um reload legítimo
+      sessionStorage.setItem('todosProdutos_isReload', 'true');
+    },
+    limparEstadoSalvo() {
+      sessionStorage.removeItem('todosProdutos_paginaAtual');
+      sessionStorage.removeItem('todosProdutos_categoriaSelecionada');
+      sessionStorage.removeItem('todosProdutos_ordenacao');
+      sessionStorage.removeItem('todosProdutos_isReload');
+      sessionStorage.removeItem('todosProdutos_vindoDeDetalhes');
     },
   },
 };
