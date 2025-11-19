@@ -161,6 +161,9 @@ export default {
           );
           comprasExistentes.unshift(compra);
           localStorage.setItem(storageKey, JSON.stringify(comprasExistentes));
+        } else {
+          // Em sucesso limpa qualquer fallback antigo para evitar duplicações
+          try { localStorage.removeItem(`compras:${userId}`); } catch (_) {}
         }
 
         // Limpa carrinho (estado e localStorage) e redireciona
