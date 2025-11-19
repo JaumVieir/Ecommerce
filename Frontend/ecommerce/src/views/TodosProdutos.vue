@@ -465,7 +465,7 @@ export default {
             <div class="flex items-center space-x-2">
               <button
                 class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-                :disabled="paginaAtual === 1"
+                :class="{ 'opacity-50 cursor-not-allowed': paginaAtual === 1 }"
                 @click="prevPage"
               >
                 Anterior
@@ -475,7 +475,7 @@ export default {
 
               <button
                 class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-                :disabled="paginaAtual === totalPaginas"
+                :class="{ 'opacity-50 cursor-not-allowed': paginaAtual === totalPaginas }"
                 @click="nextPage"
               >
                 Próxima
