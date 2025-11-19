@@ -305,11 +305,17 @@ export default {
       }
     },
     async handlePrev(event) {
-      const nova = this.paginaAtual + 1;
-      console.debug('[TodosProdutos] testIncrement clicked - atual:', this.paginaAtual, 'nova:', nova);
+      console.debug('[TodosProdutos] handlePrev event:', event && event.type);
+      // decrementar (não menor que 1) e forçar carregar
+      const nova = Math.max(1, this.paginaAtual - 1);
+      if (nova === this.paginaAtual) {
+        console.debug('[TodosProdutos] handlePrev -> já na página 1');
+        return;
+      }
       this.paginaAtual = nova;
+      console.debug('[TodosProdutos] handlePrev -> nova:', nova);
       const endpoint = this.buildProdutosEndpoint(nova);
-      console.debug('[TodosProdutos] testIncrement -> endpoint:', endpoint);
+      console.debug('[TodosProdutos] handlePrev -> endpoint:', endpoint);
       await this.carregarPagina(nova, endpoint);
     },
     nextPage() {
