@@ -45,7 +45,8 @@ export default {
 },
 
   async mounted() {
-    this.paginaAtual = 1;
+    await this.carregarPagina(1);
+   
     // Inicializa a página a partir de uma propriedade global (se existir) ou sessionStorage
     const globalPage = window.todosProdutosPagina;
     const saved = sessionStorage.getItem('todosProdutos_paginaAtual');
