@@ -2,7 +2,7 @@ import axios from "axios";
 import http from "http";
 import https from "https";
 
-const PY_URL = process.env.PY_URL || process.env.PY_SVC_URL || "https://ecommerce-witm.onrender.com";
+const PY_URL = process.env.PY_URL || process.env.PY_SVC_URL || "https://recomendacao-k44k.onrender.com";
 const PY_TOKEN = process.env.PY_SVC_TOKEN;
 
 const agentHttp = new http.Agent({ keepAlive: true });
