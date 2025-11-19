@@ -31,23 +31,97 @@ router.get("/getByTexto/:texto", async (req, res) => {
     res.status(500).json({ error: "Erro ao buscar produtos" });
   }
 });
-
 router.get("/getProdutosByPage/:pagina", async (req, res) => {
   try {
-    const { pagina } = req.params;
-    const indiceFinal = Number(pagina) * 20;
-    const indiceInicial =(indiceFinal - 20)+1;
+    // página atual (mínimo 1)
+    let pagina = parseInt(req.params.pagina, 10) || 1;
+    if (pagina < 1) pagina = 1;
 
-    const like = `%${pagina}%`;
-    const [produtos] = await pool.query(
-      `select * from produtos  WHERE id BETWEEN ? AND ?`,
-      [indiceInicial, indiceFinal]
-    );
-    res.json(produtos);
+    // limite por página (vem da query string, default 20)
+    const limit = parseInt(req.query.limit, 10) || 20;
+    const offset = (pagina - 1) * limit;
+
+    // filtros vindos do front
+    const { q, categoria, ordenacao } = req.query;
+
+    // -----------------------------
+    // 1) Monta SQL base com filtros
+    // -----------------------------
+    let sql = `SELECT * FROM produtos WHERE 1=1`;
+    const params = [];
+
+    // filtro de busca (nome / descrição)
+    if (q) {
+      const like = `%${q}%`;
+      sql += ` AND (product_name LIKE ? OR descricao LIKE ?)`;
+      params.push(like, like);
+    }
+
+    // filtro de categoria
+    if (categoria) {
+      sql += ` AND category = ?`;
+      params.push(categoria);
+    }
+
+    // ordenação
+    if (ordenacao === "1") {
+      // mais barato
+      sql += ` ORDER BY actual_price ASC`;
+    } else if (ordenacao === "2") {
+      // mais caro
+      sql += ` ORDER BY actual_price DESC`;
+    } else if (ordenacao === "3") {
+      // mais popular (ajuste a coluna se for outra)
+      sql += ` ORDER BY rating DESC`;
+    } else {
+      // padrão
+      sql += ` ORDER BY id ASC`;
+    }
+
+    // paginação
+    sql += ` LIMIT ? OFFSET ?`;
+    params.push(limit, offset);
+
+    // -----------------------------
+    // 2) Busca página de produtos
+    // -----------------------------
+    const [produtos] = await pool.query(sql, params);
+
+    // -----------------------------
+    // 3) Busca TOTAL de registros com os mesmos filtros
+    // -----------------------------
+    let countSql = `SELECT COUNT(*) AS total FROM produtos WHERE 1=1`;
+    const countParams = [];
+
+    if (q) {
+      const like = `%${q}%`;
+      countSql += ` AND (product_name LIKE ? OR descricao LIKE ?)`;
+      countParams.push(like, like);
+    }
+
+    if (categoria) {
+      countSql += ` AND category = ?`;
+      countParams.push(categoria);
+    }
+
+    const [rowsCount] = await pool.query(countSql, countParams);
+    const total = rowsCount[0]?.total || 0;
+
+    // -----------------------------
+    // 4) Resposta pro frontend
+    // -----------------------------
+    res.json({
+      products: produtos,
+      total,
+      page: pagina,
+      limit,
+    });
   } catch (err) {
+    console.error("Erro ao buscar produtos paginados:", err);
     res.status(500).json({ error: "Erro ao buscar produtos" });
   }
 });
+
 
 router.get("/", async (req, res) => {
   try {

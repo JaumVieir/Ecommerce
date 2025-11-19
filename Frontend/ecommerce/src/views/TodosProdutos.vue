@@ -205,10 +205,10 @@ export default {
       this.mostrandoProdutos = false;
       try {
         const endpoint = endpointArg || this.buildProdutosEndpoint(pagina);
-        console.debug('[TodosProdutos] carregarPagina -> pagina:', pagina, 'endpoint:', endpoint);
-        const response = await api.get(endpoint);
-        console.debug('[TodosProdutos] carregarPagina -> response status:', response && response.status);
-        console.debug('[TodosProdutos] carregarPagina -> response.data (preview):', response && response.data && (Array.isArray(response.data) ? `array(${response.data.length})` : typeof response.data));
+  console.debug('[TodosProdutos] carregarPagina -> pagina:', pagina, 'endpoint:', endpoint);
+  const response = await api.get(endpoint);
+  console.debug('[TodosProdutos] carregarPagina -> response status:', response && response.status);
+  console.debug('[TodosProdutos] carregarPagina -> response.data (preview):', response && response.data && (Array.isArray(response.data) ? `array(${response.data.length})` : typeof response.data));
 
         // Aceitar múltiplos formatos de resposta para facilitar a integração:
         // 1) { products: [...], total: 123 }
@@ -229,18 +229,42 @@ export default {
             // total com fallback para produtos.length se servidor não retornar o total
             this.totalProdutosServidor = this.totalProdutosServidor || this.produtos.length;
           } else {
-            // caso inesperado: tentar usar data[0]
-            // Se o backend devolveu um objeto com chave diferente, tentar extrair o primeiro array encontrado
-            const maybeArray = Object.keys(response.data).map(k => response.data[k]).find(v => Array.isArray(v));
-            this.produtos = maybeArray || response.data[0] || [];
-            // tentar extrair total se existir em outras chaves
-            if (!this.totalProdutosServidor) {
-              const maybeTotal = Object.keys(response.data).map(k => response.data[k]).find(v => typeof v === 'number');
-              if (maybeTotal) this.totalProdutosServidor = maybeTotal;
+            // caso inesperado: tentar heurísticas para extrair um array de produtos
+            const findFirstArray = (val, depth = 0) => {
+              if (!val || depth > 3) return null;
+              if (Array.isArray(val)) return val;
+              if (typeof val !== 'object') return null;
+              for (const k of Object.keys(val)) {
+                const v = val[k];
+                if (Array.isArray(v)) return v;
+              }
+              // tentar recursivamente em objetos aninhados (nivel 2)
+              for (const k of Object.keys(val)) {
+                const v = val[k];
+                if (typeof v === 'object') {
+                  const found = findFirstArray(v, depth + 1);
+                  if (found) return found;
+                }
+              }
+              return null;
+            };
+
+            const maybeArray = findFirstArray(response.data);
+            if (maybeArray) {
+              this.produtos = maybeArray;
+              // tentar extrair total de chaves numéricas ou 'total' em mesmo nível
+              if (response.data.total) this.totalProdutosServidor = response.data.total;
+              else {
+                const maybeTotal = Object.keys(response.data).map(k => response.data[k]).find(v => typeof v === 'number');
+                if (maybeTotal) this.totalProdutosServidor = maybeTotal;
+              }
+            } else {
+              // fallback: mostrar o objeto inteiro como único item para diagnóstico
+              this.produtos = Array.isArray(response.data) ? response.data : [response.data];
             }
           }
         }
-        console.debug('[TodosProdutos] carregarPagina -> produtos carregados:', Array.isArray(this.produtos) ? this.produtos.length : 0, 'ex:', this.produtos && this.produtos[0]);
+  console.debug('[TodosProdutos] carregarPagina -> produtos carregados:', Array.isArray(this.produtos) ? this.produtos.length : 0, 'ex:', this.produtos && this.produtos[0]);
         this.mostrandoProdutos = true;
       } catch (error) {
         console.error('Erro ao carregar produtos paginados:', error);
