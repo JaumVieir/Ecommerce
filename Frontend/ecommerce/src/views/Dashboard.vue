@@ -47,26 +47,24 @@ export default {
       api
         .get(`/vendas/getVendasById/${userId}`)
         .then((response) => {
-          // Normaliza IDs vindos da API removendo prefixos como "Compra #"
-          this.compras = response.data.map((c) => {
-            let rawId = c.id ?? Date.now();
-            if (typeof rawId === "string") {
-              const cleaned = rawId.replace(/^compra\s*#/i, "").trim();
-              const numeric = parseInt(cleaned, 10);
-              rawId = isNaN(numeric) ? cleaned : numeric;
-            }
-            return {
-              id: rawId,
-              data: c.data ?? new Date().toLocaleDateString("pt-BR"),
-              valorTotal: Number(c.valorTotal) || 0,
-              itens: Array.isArray(c.produtos) ? c.produtos : [],
-            };
-          });
-          // Removemos qualquer fallback antigo para evitar duplicações definitivas
+          this.compras = response.data.map((c) => ({
+            id: c.id ?? Date.now(),
+            data: c.data ?? new Date().toLocaleDateString("pt-BR"),
+            valorTotal: Number(c.valorTotal) || 0,
+            itens: Array.isArray(c.produtos) ? c.produtos : [],
+          }));
+          // Mescla compras armazenadas localmente (otimista) caso API ainda não tenha propagado a última compra
           try {
-            localStorage.removeItem(`compras:${userId}`);
+            const storageKey = `compras:${userId}`;
+            const localCompras = JSON.parse(
+              localStorage.getItem(storageKey) || "[]"
+            );
+            const existingIds = new Set(this.compras.map((c) => c.id));
+            localCompras.forEach((c) => {
+              if (!existingIds.has(c.id)) this.compras.unshift(c);
+            });
           } catch (e) {
-            console.error("Falha ao limpar compras locais antigas:", e);
+            console.error("Falha ao mesclar compras locais:", e);
           }
 
           api
@@ -283,13 +281,15 @@ export default {
 <template>
   <div id="webcrumbs">
     <div class="min-h-screen bg-gray-50">
-      <header class="bg-white shadow-md sticky top-0 z-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex justify-between items-center py-4">
+      <header class="bg-white shadow-md sticky top-0 z-10 w-full">
+        <div class="w-full px-0">
+          <div class="flex justify-between items-center py-4 px-4">
+            <!-- Título -->
             <div class="flex items-center">
               <h1 class="text-2xl font-bold text-primary-600">E-Commerce</h1>
             </div>
 
+            <!-- Ícones alinhados à direita -->
             <div class="flex items-center space-x-4">
               <div class="flex items-center gap-2">
                 <router-link
@@ -303,6 +303,7 @@ export default {
                     >shopping_bag</span
                   >
                 </router-link>
+
                 <router-link
                   to="/Carrinho"
                   class="p-2 rounded-full hover:bg-gray-100 transition duration-300 relative flex items-center"
@@ -312,6 +313,7 @@ export default {
                     >shopping_cart</span
                   >
                 </router-link>
+
                 <button
                   class="p-2 rounded-full hover:bg-gray-100 transition duration-300 flex items-center"
                   @click="logout"
