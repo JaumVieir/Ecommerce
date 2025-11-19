@@ -93,6 +93,10 @@ export default {
     } else {
       // Garantir estado limpo caso tenha sobrado algo de navegação anterior não autorizada
       this.limparEstadoSalvo();
+        // Sempre iniciar na página 1 se não restaurando
+        this.paginaAtual = 1;
+        this.categoriaSelecionada = '';
+        this.ordenacao = '';
     }
 
     // Se não há cache, carrega normalmente a partir da página atual (padrão 1 ou restaurada)
@@ -116,6 +120,7 @@ export default {
       this.limparEstadoSalvo();
     }
     next();
+      // Só mantém estado se indo para detalhes, senão limpa SEMPRE
   },
   watch: {
     paginaAtual(novaPagina) {
