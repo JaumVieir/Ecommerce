@@ -358,11 +358,12 @@ export default {
       localStorage.removeItem("auth");
       this.$router.push({ path: "/login" });
     },
-    irParaPaginaInicial() {
+    async irParaPaginaInicial() {
       this.paginaAtual = 1;
       this.pesquisar = "";
       this.categoriaSelecionada = "";
       this.ordenacao = "";
+      await this.carregarPagina(1);
       this.$router.push({ path: "/" });
     },
     async handlePrev() {
