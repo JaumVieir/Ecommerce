@@ -12,7 +12,7 @@ const app = express();
 
 // allowlist fixo + regex p/ previews da Vercel desse projeto
 const allowlist = [
-  "https://ecommerce-seven-delta-67.vercel.app/", // antigo
+  "https://ecommerce-seven-delta-67.vercel.app", // antigo
   "http://localhost:5173",
   "http://localhost:3000",
 ];
