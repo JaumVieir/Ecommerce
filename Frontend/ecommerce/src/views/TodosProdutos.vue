@@ -326,17 +326,7 @@ export default {
         this.paginaAtual = nova;
       }
     },
-    async handleNext(event) {
-      console.debug('[TodosProdutos] handleNext event:', event && event.type);
-      // incrementar e forçar carregar (não bloqueamos por totalPaginas)
-      const nova = this.paginaAtual + 1;
-      this.paginaAtual = nova;
-      console.debug('[TodosProdutos] handleNext -> nova:', nova);
-      const endpoint = this.buildProdutosEndpoint(nova);
-      console.debug('[TodosProdutos] handleNext -> endpoint:', endpoint);
-      await this.carregarPagina(nova, endpoint);
-    },
-    async testIncrement() {
+    async handleNext() {
       // Método de diagnóstico: incrementa a página e força carregar (sempre tenta; servidor decide)
       const nova = this.paginaAtual + 1;
       console.debug('[TodosProdutos] testIncrement clicked - atual:', this.paginaAtual, 'nova:', nova);
