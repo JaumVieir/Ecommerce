@@ -296,43 +296,17 @@ export default {
       localStorage.removeItem("auth");
       this.$router.push({ path: "/login" });
     },
-    prevPage() {
-      // Apenas atualiza o estado global/local da página. O watcher cuida de chamar carregarPagina.
-      if (this.paginaAtual > 1) {
-        const nova = this.paginaAtual - 1;
-        console.debug('[TodosProdutos] prevPage clicked - atual:', this.paginaAtual, 'nova:', nova);
-        this.paginaAtual = nova;
-      }
-    },
-    async handlePrev(event) {
-      console.debug('[TodosProdutos] handlePrev event:', event && event.type);
-      // decrementar (não menor que 1) e forçar carregar
-      const nova = Math.max(1, this.paginaAtual - 1);
-      if (nova === this.paginaAtual) {
-        console.debug('[TodosProdutos] handlePrev -> já na página 1');
-        return;
-      }
+    async handlePrev() {
+      const nova = this.paginaAtual - 1;
       this.paginaAtual = nova;
-      console.debug('[TodosProdutos] handlePrev -> nova:', nova);
       const endpoint = this.buildProdutosEndpoint(nova);
-      console.debug('[TodosProdutos] handlePrev -> endpoint:', endpoint);
-      await this.carregarPagina(nova, endpoint);
-    },
-    nextPage() {
-      const max = this.totalPaginas;
-      if (this.paginaAtual < max) {
-        const nova = this.paginaAtual + 1;
-        console.debug('[TodosProdutos] nextPage clicked - atual:', this.paginaAtual, 'nova:', nova, 'max:', max);
-        this.paginaAtual = nova;
-      }
+      await this.carregarPagina(nova, endpoint);;
     },
     async handleNext() {
       // Método de diagnóstico: incrementa a página e força carregar (sempre tenta; servidor decide)
       const nova = this.paginaAtual + 1;
-      console.debug('[TodosProdutos] testIncrement clicked - atual:', this.paginaAtual, 'nova:', nova);
       this.paginaAtual = nova;
       const endpoint = this.buildProdutosEndpoint(nova);
-      console.debug('[TodosProdutos] testIncrement -> endpoint:', endpoint);
       await this.carregarPagina(nova, endpoint);
     },
   },
