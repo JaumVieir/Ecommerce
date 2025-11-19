@@ -336,21 +336,15 @@ export default {
       console.debug('[TodosProdutos] handleNext -> endpoint:', endpoint);
       await this.carregarPagina(nova, endpoint);
     },
-    testIncrement() {
-      // Método de diagnóstico: incrementa a página e força carregar
-      const max = this.totalPaginas;
+    async testIncrement() {
+      // Método de diagnóstico: incrementa a página e força carregar (sempre tenta; servidor decide)
       const nova = this.paginaAtual + 1;
-      if (nova <= Math.max(1, max)) {
-        console.debug('[TodosProdutos] testIncrement clicked - atual:', this.paginaAtual, 'nova:', nova);
-        this.paginaAtual = nova;
-        const endpoint = this.buildProdutosEndpoint(nova);
-        console.debug('[TodosProdutos] testIncrement -> endpoint:', endpoint);
-        this.carregarPagina(nova, endpoint);
-      } else {
-        console.debug('[TodosProdutos] testIncrement -> já na última página');
-      }
+      console.debug('[TodosProdutos] testIncrement clicked - atual:', this.paginaAtual, 'nova:', nova);
+      this.paginaAtual = nova;
+      const endpoint = this.buildProdutosEndpoint(nova);
+      console.debug('[TodosProdutos] testIncrement -> endpoint:', endpoint);
+      await this.carregarPagina(nova, endpoint);
     },
-    // testIncrement removido — lógica incorporada aos handlers prev/next
   },
 };
 </script>
