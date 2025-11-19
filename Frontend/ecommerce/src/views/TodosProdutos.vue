@@ -27,30 +27,6 @@ export default {
   },
 
   computed: {
-    produtosFiltrados() {
-      let lista = this.produtos;
-
-      // filtro por categoria
-      if (
-        this.categoriaSelecionada &&
-        this.categoriaSelecionada !== "" &&
-        this.categoriaSelecionada !== "Todas as Categorias"
-      ) {
-        lista = lista.filter((p) => p.category === this.categoriaSelecionada);
-      }
-
-      // filtro por texto da busca (nome / descrição)
-      if (this.pesquisar && this.pesquisar.length >= 2) {
-        const termo = this.pesquisar.toLowerCase();
-        lista = lista.filter((p) => {
-          const nome = (p.product_name || "").toLowerCase();
-          const desc = (p.descricao || "").toLowerCase();
-          return nome.includes(termo) || desc.includes(termo);
-        });
-      }
-
-      return lista;
-    },
     produtosPaginação() {
       return this.produtosFiltrados;
     },
@@ -77,6 +53,18 @@ export default {
   },
 
   watch: {
+    categoriaSelecionada(novaCategoria) {
+      const pagina = 1;
+      this.paginaAtual = pagina;
+
+      const endpoint = this.buildProdutosEndpoint(pagina, {
+        search: this.pesquisar,
+        categoria: novaCategoria,
+        ordenacao: this.ordenacao,
+      });
+
+      this.carregarPagina(pagina, endpoint);
+    },
     paginaAtual(novaPagina, antiga) {
       // Garantir limites
       if (!novaPagina || novaPagina < 1) {
