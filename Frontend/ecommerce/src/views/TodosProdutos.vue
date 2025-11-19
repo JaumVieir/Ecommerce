@@ -1,203 +1,88 @@
 <script>
-import axios from "axios";
 import { getAuth } from "../services/auth.js";
 import api from "../services/api.js";
 
 export default {
   data() {
     return {
+      // Produtos carregados para a página atual (serão buscados do servidor)
       produtos: [],
-      produtosCache: [], // Cache completo dos produtos carregados
-      totalProdutosServidor: 0, // Total de produtos no servidor
+      totalProdutosServidor: 0,
       paginaAtual: 1,
       produtosPorPagina: 20,
-      paginasCarregadas: 0, // Quantas páginas já foram carregadas
-      carregandoProdutos: false, // Flag para evitar requisições duplicadas
+      carregandoProdutos: false,
       pesquisar: "",
       ordenacao: "",
-      categorias: " ",
+      categorias: [],
       categoriaSelecionada: "",
       // Toast simples para feedback de adição ao carrinho
       toastVisible: false,
       toastMessage: "",
       toastTimer: null,
       // Flags internas
-      isRestoringState: false,
-      carregandoInicial: true,
-      mostrandoProdutos: false, // Flag para controlar exibição gradual
+      mostrandoProdutos: false,
     };
   },
 
   computed: {
+    // Se desejar, o filtro por categoria ainda é aplicado no cliente
     produtosFiltrados() {
-      let produtosParaFiltrar = this.produtosCache;
-      
       if (
         this.categoriaSelecionada &&
         this.categoriaSelecionada !== "" &&
         this.categoriaSelecionada !== "Todas as Categorias"
       ) {
-        return produtosParaFiltrar.filter(
-          (p) => p.category === this.categoriaSelecionada
-        );
-      } else {
-        return produtosParaFiltrar;
+        return this.produtos.filter((p) => p.category === this.categoriaSelecionada);
       }
+      return this.produtos;
     },
+    // Como agora o servidor deve devolver a página já paginada, retornamos diretamente
     produtosPaginação() {
-      const inicio = (this.paginaAtual - 1) * this.produtosPorPagina;
-      const fim = inicio + this.produtosPorPagina;
-      return this.produtosFiltrados.slice(inicio, fim);
+      return this.produtosFiltrados;
     },
     totalPaginas() {
-      // Se estamos filtrando por categoria, usar o total filtrado
-      if (this.categoriaSelecionada && this.categoriaSelecionada !== "" && this.categoriaSelecionada !== "Todas as Categorias") {
-        return Math.ceil(this.produtosFiltrados.length / this.produtosPorPagina);
-      }
-      // Caso contrário, usar o total do servidor
-      return Math.ceil(this.totalProdutosServidor / this.produtosPorPagina);
+      return Math.max(1, Math.ceil((this.totalProdutosServidor || 0) / this.produtosPorPagina));
     },
   },
 
   async mounted() {
-    // Adicionar listener para capturar reload real da aba
-    window.addEventListener('beforeunload', this.handleBeforeUnload);
-
-    const vindoDeDetalhes = sessionStorage.getItem('todosProdutos_vindoDeDetalhes') === 'true';
-    const isReloadFlag = sessionStorage.getItem('todosProdutos_isReload') === 'true';
-
-    // Critério de restauração: somente se veio da página de detalhes ou se houve reload
-    const deveRestaurar = vindoDeDetalhes || isReloadFlag;
-    this.isRestoringState = deveRestaurar;
-
-    if (deveRestaurar) {
-      // Restaurar cache (para desempenho) se existir
-      const cacheStr = sessionStorage.getItem('todosProdutos_cache');
-      const totalStr = sessionStorage.getItem('todosProdutos_total');
-      if (cacheStr && totalStr) {
-        try {
-          this.produtosCache = JSON.parse(cacheStr);
-          this.totalProdutosServidor = parseInt(totalStr);
-          this.paginasCarregadas = Math.ceil(this.produtosCache.length / this.produtosPorPagina);
-          this.carregandoInicial = false;
-          this.mostrandoProdutos = true;
-        } catch (e) {
-          console.error('Erro ao restaurar cache:', e);
-        }
-      }
-      // Restaurar pagina / filtros
-      const paginaSalva = sessionStorage.getItem('todosProdutos_paginaAtual');
-      const categoriaSalva = sessionStorage.getItem('todosProdutos_categoriaSelecionada');
-      const ordenacaoSalva = sessionStorage.getItem('todosProdutos_ordenacao');
-      if (paginaSalva) this.paginaAtual = parseInt(paginaSalva);
-      if (categoriaSalva) this.categoriaSelecionada = categoriaSalva;
-      if (ordenacaoSalva) this.ordenacao = ordenacaoSalva;
-    } else {
-      // Garantir estado limpo caso tenha sobrado algo de navegação anterior não autorizada
-      this.limparEstadoSalvo();
-        // Sempre iniciar na página 1 se não restaurando
-        this.paginaAtual = 1;
-        this.categoriaSelecionada = '';
-        this.ordenacao = '';
-    }
-
-    // Se não há cache, carrega normalmente a partir da página atual (padrão 1 ou restaurada)
-    if (!this.produtosCache.length) {
-      await this.carregarProdutosPaginados(this.paginaAtual);
-      this.carregandoInicial = false;
-    } else {
-      this.mostrandoProdutos = true;
-    }
-
-    // Remover flags usadas (exceto cache) para não restaurar indevidamente em futuras visitas
-    sessionStorage.removeItem('todosProdutos_vindoDeDetalhes');
-    sessionStorage.removeItem('todosProdutos_isReload');
-
+    await this.carregarPagina(this.paginaAtual);
     this.getCategoria();
   },
-  beforeUnmount() {
-    window.removeEventListener('beforeunload', this.handleBeforeUnload);
-  },
-  beforeRouteLeave(to, from, next) {
-    // Se a navegação for para detalhes, mantém estado. Caso contrário, limpa.
-    if (!to.path.startsWith('/produto/')) {
-      this.limparEstadoSalvo();
-    }
-    next();
-      // Só mantém estado se indo para detalhes, senão limpa SEMPRE
-  },
+
   watch: {
     paginaAtual(novaPagina) {
-      // Verificar se precisa carregar mais produtos
-      this.verificarCarregarMaisProdutos(novaPagina);
-    },
-    categoriaSelecionada() {
-      // Não resetar se estamos restaurando o estado salvo
-      if (this.isRestoringState) return;
-      
-      // Resetar para página 1 ao mudar de categoria
-      this.paginaAtual = 1;
-      
-      // Limpar estado salvo da página ao mudar categoria
-      sessionStorage.removeItem('todosProdutos_paginaAtual');
+      this.carregarPagina(novaPagina);
     },
     ordenacao() {
-      switch (this.ordenacao) {
-        case "1":
-          this.produtosCache.sort(
-            (a, b) => parseFloat(a.actual_price) - parseFloat(b.actual_price)
-          );
-          break;
-        case "2":
-          this.produtosCache.sort(
-            (a, b) => parseFloat(b.actual_price) - parseFloat(a.actual_price)
-          );
-          break;
-        case "3":
-          this.produtosCache.sort((a, b) => b.rating_count - a.rating_count);
-          break;
-        default:
-          // Recarregar produtos na ordem padrão
-          this.produtosCache = [];
-          this.paginasCarregadas = 0;
-          this.carregarProdutosPaginados(1);
-          break;
-      }
+      // Simples: recarrega a página quando a ordenação muda. Você pode adaptar para passar um parâmetro ao endpoint.
+      this.carregarPagina(1);
     },
     pesquisar(novoValor) {
       if (novoValor.length >= 2) {
         this.buscarProdutos(novoValor);
       } else {
-        // Resetar para o cache original
-        this.produtosCache = [];
-        this.paginasCarregadas = 0;
-        this.paginaAtual = 1;
-        this.carregarProdutosPaginados(1);
+        this.carregarPagina(1);
       }
     },
   },
+
   methods: {
     formataData() {
       const data = new Date();
-
       const dia = String(data.getDate()).padStart(2, "0");
       const mes = String(data.getMonth() + 1).padStart(2, "0");
       const ano = data.getFullYear();
-      const dataFormatada = `${dia}-${mes}-${ano}`;
-      return dataFormatada;
+      return `${dia}-${mes}-${ano}`;
     },
     irParaDashboardOuLogin() {
       const { userId } = getAuth();
-      if (userId) {
-        this.$router.push({ path: "/Dashboard" });
-      } else {
-        this.$router.push({ path: "/login" });
-      }
+      if (userId) this.$router.push({ path: "/Dashboard" });
+      else this.$router.push({ path: "/login" });
     },
     async addAoCarrinho(produto) {
       try {
         const { userId } = getAuth();
-        console.log("User ID:", userId);
         const cliques = {
           usuario: userId,
           clique: [
@@ -208,15 +93,12 @@ export default {
             },
           ],
         };
-        console.log(cliques);
         try {
-          const resposta = await api.post(
-            `/usuarios/setClique`,
-            cliques
-          );
+          await api.post(`/usuarios/setClique`, cliques);
         } catch (error) {
           console.error("Erro ao registrar clique:", error);
         }
+
         const carrinhoStr = localStorage.getItem("carrinho");
         const carrinho = carrinhoStr ? JSON.parse(carrinhoStr) : [];
         const existente = carrinho.find((p) => p.id == produto.product_id);
@@ -249,14 +131,9 @@ export default {
       }, 2000);
     },
     getStars(rating) {
-      // Returns an array of 5 positions with values: 'full' | 'half' | 'empty'
-      const num =
-        typeof rating === "number"
-          ? rating
-          : parseFloat(String(rating || 0).replace(",", "."));
+      const num = typeof rating === "number" ? rating : parseFloat(String(rating || 0).replace(",", "."));
       if (isNaN(num)) return ["empty", "empty", "empty", "empty", "empty"];
       const clamped = Math.max(0, Math.min(5, num));
-      // Round to nearest 0.5
       const rounded = Math.round(clamped * 2) / 2;
       const full = Math.floor(rounded);
       const hasHalf = rounded % 1 !== 0;
@@ -268,113 +145,86 @@ export default {
       }
       return stars;
     },
-    async buscarProdutos(texto) {
-      try {
-        const response = await api.get(
-          `/produtos/getByTexto/${texto}`
-        );
-        // Ao buscar, substituir o cache com os resultados da busca
-        this.produtosCache = response.data;
-        this.totalProdutosServidor = response.data.length;
-        this.paginaAtual = 1;
-      } catch (error) {
-        console.error(error);
-        alert("Erro ao carregar produtos. Tente novamente.");
-      }
-    },
-    async getCategoria() {
-      try {
-        const response = await api.get(
-          `/produtos/getByCategoria`
-        );
 
-        this.categorias = response.data.map((cat) => cat.category);
-      } catch (e) {
-        console.error(e);
-      }
-    },
-    async carregarProdutosPaginados(paginaInicial) {
-      if (this.carregandoProdutos) return;
+    // Monta o endpoint para buscar produtos paginados.
+    // TODO: Substitua o retorno desta função pelo seu endpoint real.
+    // Exemplo sugerido: return `/produtos?page=${pagina}&limit=${this.produtosPorPagina}`;
+    buildProdutosEndpoint(pagina) {
+      // ATENÇÃO: troca aqui para o endpoint que sua API usa para paginação
+      return `https://ecommerce-nuqc.onrender.com/produtos/getProdutosByPage/${pagina}`;
       
+    },
+
+    async carregarPagina(pagina) {
+      if (this.carregandoProdutos) return;
+      this.carregandoProdutos = true;
+      this.mostrandoProdutos = false;
       try {
-        this.carregandoProdutos = true;
-        
-        // Carregar 5 páginas inicialmente, depois 3 páginas por vez (mais rápido e eficiente)
-        const offset = (paginaInicial - 1) * this.produtosPorPagina;
-        const isCarregamentoInicial = this.paginasCarregadas === 0;
-        const paginasParaCarregar = isCarregamentoInicial ? 5 : 3;
-        const limit = this.produtosPorPagina * paginasParaCarregar; // 5 páginas = 100 produtos inicial, 3 páginas = 60 produtos depois
-        
-        const response = await api.get(`/produtos?limit=${limit}&offset=${offset}`);
-        
-        if (response.data && response.data[0]) {
-          const novosProdutos = response.data[0];
-          
-          // Adicionar ao cache apenas produtos que ainda não existem
-          novosProdutos.forEach(produto => {
-            if (!this.produtosCache.find(p => p.product_id === produto.product_id)) {
-              this.produtosCache.push(produto);
-            }
-          });
-          
-          this.paginasCarregadas = Math.ceil(this.produtosCache.length / this.produtosPorPagina);
-          
-          // Se a resposta tiver informação sobre o total, usar
-          if (response.data[1] && response.data[1].total) {
-            this.totalProdutosServidor = response.data[1].total;
-          } else if (this.totalProdutosServidor === 0) {
-            // Se ainda não temos o total, fazer fallback
-            await this.getProdutosSemPaginacao();
-          }
-          
-          // Mostrar produtos assim que carregar
-          this.mostrandoProdutos = true;
-          
-          // Salvar cache APENAS se for pequeno o suficiente (até 3 páginas = 60 produtos)
-          if (this.produtosCache.length <= 60) {
-            try {
-              sessionStorage.setItem('todosProdutos_cache', JSON.stringify(this.produtosCache));
-              sessionStorage.setItem('todosProdutos_total', this.totalProdutosServidor.toString());
-            } catch (e) {
-              console.log('Cache muito grande, não salvando no sessionStorage');
-            }
+        const endpoint = this.buildProdutosEndpoint(pagina);
+        const response = await api.get(endpoint);
+
+        // Aceitar múltiplos formatos de resposta para facilitar a integração:
+        // 1) { products: [...], total: 123 }
+        // 2) [ productsArray, { total } ] (formato antigo do backend)
+        // 3) apenas um array (toda a página)
+
+        if (response.data) {
+          if (response.data.products) {
+            this.produtos = response.data.products;
+            this.totalProdutosServidor = response.data.total || this.totalProdutosServidor;
+          } else if (Array.isArray(response.data) && response.data[0] && Array.isArray(response.data[0])) {
+            // formato antigo: [ [produtos], { total } ]
+            this.produtos = response.data[0];
+            if (response.data[1] && response.data[1].total) this.totalProdutosServidor = response.data[1].total;
+          } else if (Array.isArray(response.data)) {
+            // array de produtos
+            this.produtos = response.data;
+            // total com fallback para produtos.length se servidor não retornar o total
+            this.totalProdutosServidor = this.totalProdutosServidor || this.produtos.length;
+          } else {
+            // caso inesperado: tentar usar data[0]
+            this.produtos = response.data[0] || [];
           }
         }
+
+        this.mostrandoProdutos = true;
       } catch (error) {
-        console.error(error);
-        // Se a API não suportar limit/offset, tentar o método antigo
-        await this.getProdutosSemPaginacao();
+        console.error('Erro ao carregar produtos paginados:', error);
+        this.mostrandoProdutos = true; // evita spinner infinito
       } finally {
         this.carregandoProdutos = false;
       }
     },
-    async getProdutosSemPaginacao() {
+
+    async buscarProdutos(texto) {
       try {
-        const response = await api.get("/produtos");
-        if (response.data && response.data[0]) {
-          this.produtosCache = response.data[0];
-          this.totalProdutosServidor = this.produtosCache.length;
-          this.paginasCarregadas = Math.ceil(this.produtosCache.length / this.produtosPorPagina);
+        // TODO: ajuste este endpoint de busca conforme sua API
+        const endpoint = `/produtos/search/${encodeURIComponent(texto)}`;
+        const response = await api.get(endpoint);
+        if (response.data) {
+          // considerar que a busca retorna um array de produtos
+          this.produtos = Array.isArray(response.data) ? response.data : (response.data.products || []);
+          this.totalProdutosServidor = this.produtos.length;
+          this.paginaAtual = 1;
         }
       } catch (error) {
         console.error(error);
         alert("Erro ao carregar produtos. Tente novamente.");
       }
     },
-    verificarCarregarMaisProdutos(paginaAtual) {
-      // Se estamos na última página carregada ou próximo dela, carregar mais
-      const paginasRestantes = this.paginasCarregadas - paginaAtual;
-      
-      // Carregar mais quando estiver a 1 página do final do cache
-      if (paginasRestantes <= 1 && this.produtosCache.length < this.totalProdutosServidor) {
-        this.carregarProdutosPaginados(this.paginasCarregadas + 1);
+
+    async getCategoria() {
+      try {
+        const response = await api.get(`/produtos/getByCategoria`);
+        if (response.data) this.categorias = response.data.map((cat) => cat.category);
+      } catch (e) {
+        console.error(e);
       }
     },
+
     async verDetalhes(produto) {
       const id = produto.product_id;
-
       const { userId } = getAuth();
-
       const cliques = {
         usuario: userId,
         clique: [
@@ -385,27 +235,17 @@ export default {
           },
         ],
       };
-
       try {
-        // Salvar estado da página atual antes de navegar PARA detalhes
-        sessionStorage.setItem('todosProdutos_paginaAtual', String(this.paginaAtual));
-        sessionStorage.setItem('todosProdutos_categoriaSelecionada', this.categoriaSelecionada || '');
-        sessionStorage.setItem('todosProdutos_ordenacao', this.ordenacao || '');
-        sessionStorage.setItem('todosProdutos_vindoDeDetalhes', 'true');
-        
-        const resposta = await api.post(
-          `/usuarios/setClique`,
-          cliques
-        );
+        await api.post(`/usuarios/setClique`, cliques);
         this.$router.push({ path: `/produto/${id}` });
       } catch (error) {
         console.error("Erro ao registrar clique:", error);
       }
     },
+
     formataPreco(valor) {
       if (!valor) return "R$ 0,00";
-      const numero =
-        typeof valor === "string" ? parseFloat(valor.replace(",", ".")) : valor;
+      const numero = typeof valor === "string" ? parseFloat(valor.replace(",", ".")) : valor;
       return numero.toLocaleString("pt-BR", {
         style: "currency",
         currency: "BRL",
@@ -415,21 +255,6 @@ export default {
     logout() {
       localStorage.removeItem("auth");
       this.$router.push({ path: "/login" });
-    },
-    handleBeforeUnload() {
-      // Salva somente page/filtros se realmente recarregar/fechar aba
-      sessionStorage.setItem('todosProdutos_paginaAtual', String(this.paginaAtual));
-      sessionStorage.setItem('todosProdutos_categoriaSelecionada', this.categoriaSelecionada || '');
-      sessionStorage.setItem('todosProdutos_ordenacao', this.ordenacao || '');
-      // Marcar que o próximo load é um reload legítimo
-      sessionStorage.setItem('todosProdutos_isReload', 'true');
-    },
-    limparEstadoSalvo() {
-      sessionStorage.removeItem('todosProdutos_paginaAtual');
-      sessionStorage.removeItem('todosProdutos_categoriaSelecionada');
-      sessionStorage.removeItem('todosProdutos_ordenacao');
-      sessionStorage.removeItem('todosProdutos_isReload');
-      sessionStorage.removeItem('todosProdutos_vindoDeDetalhes');
     },
   },
 };
