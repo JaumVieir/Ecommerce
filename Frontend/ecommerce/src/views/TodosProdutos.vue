@@ -390,7 +390,7 @@ export default {
         <div class="w-full px-0">
           <div class="flex justify-between items-center py-4 px-4">
             <div class="flex items-center">
-              <h1 class="text-2xl font-bold text-primary-600">E-Commerce</h1>
+              <h1 class="text-2xl font-bold text-primary-600 cursor-pointer hover:opacity-80 transition-opacity" @click="$router.push('/')">E-Commerce</h1>
             </div>
             <div class="hidden md:flex items-center space-x-8"></div>
             <div class="flex items-center space-x-4">
