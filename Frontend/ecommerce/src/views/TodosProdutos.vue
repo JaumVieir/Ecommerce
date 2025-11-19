@@ -304,17 +304,19 @@ export default {
         this.paginaAtual = nova;
       }
     },
-    handlePrev(event) {
+    async handlePrev(event) {
       console.debug('[TodosProdutos] handlePrev event:', event && event.type);
-      // implementar a lógica do teste: decrementar e forçar carregar
-      if (this.paginaAtual > 1) {
-        const nova = this.paginaAtual - 1;
-        console.debug('[TodosProdutos] handlePrev -> nova:', nova);
-        this.paginaAtual = nova;
-        const endpoint = this.buildProdutosEndpoint(nova);
-        console.debug('[TodosProdutos] handlePrev -> endpoint:', endpoint);
-        this.carregarPagina(nova, endpoint);
+      // decrementar (não menor que 1) e forçar carregar
+      const nova = Math.max(1, this.paginaAtual - 1);
+      if (nova === this.paginaAtual) {
+        console.debug('[TodosProdutos] handlePrev -> já na página 1');
+        return;
       }
+      this.paginaAtual = nova;
+      console.debug('[TodosProdutos] handlePrev -> nova:', nova);
+      const endpoint = this.buildProdutosEndpoint(nova);
+      console.debug('[TodosProdutos] handlePrev -> endpoint:', endpoint);
+      await this.carregarPagina(nova, endpoint);
     },
     nextPage() {
       const max = this.totalPaginas;
@@ -324,18 +326,15 @@ export default {
         this.paginaAtual = nova;
       }
     },
-    handleNext(event) {
+    async handleNext(event) {
       console.debug('[TodosProdutos] handleNext event:', event && event.type);
-      // implementar a lógica do teste: incrementar e forçar carregar
-      const max = this.totalPaginas;
+      // incrementar e forçar carregar (não bloqueamos por totalPaginas)
       const nova = this.paginaAtual + 1;
-      if (nova <= Math.max(1, max)) {
-        console.debug('[TodosProdutos] handleNext -> nova:', nova);
-        this.paginaAtual = nova;
-        const endpoint = this.buildProdutosEndpoint(nova);
-        console.debug('[TodosProdutos] handleNext -> endpoint:', endpoint);
-        this.carregarPagina(nova, endpoint);
-      }
+      this.paginaAtual = nova;
+      console.debug('[TodosProdutos] handleNext -> nova:', nova);
+      const endpoint = this.buildProdutosEndpoint(nova);
+      console.debug('[TodosProdutos] handleNext -> endpoint:', endpoint);
+      await this.carregarPagina(nova, endpoint);
     },
     testIncrement() {
       // Método de diagnóstico: incrementa a página e força carregar
