@@ -32,6 +32,22 @@ router.get("/getByTexto/:texto", async (req, res) => {
   }
 });
 
+router.get("/getProdutosByPage/:pagina", async (req, res) => {
+  try {
+    const { pagina } = req.params;
+    const indiceFinal = Number(pagina) * 20;
+    const indiceInicial =indiceFinal - 20;
+
+    const like = `%${pagina}%`;
+    const [produtos] = await pool.query(
+      `select * from produtos  WHERE id BETWEEN ? AND ?`,
+      [indiceInicial, indiceFinal]
+    );
+    res.json(produtos);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar produtos" });
+  }
+});
 
 router.get("/", async (req, res) => {
   try {
