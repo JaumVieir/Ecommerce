@@ -62,12 +62,10 @@ export default {
     await this.carregarPagina(this.paginaAtual);
     this.getCategoria();
     
-    // Adiciona listeners nativos como fallback para diagnóstico
+    // Registra listeners nativos nas refs dos botões como fallback confiável
     try {
-      const btnNext = document.getElementById('btn-next');
-      const btnPrev = document.getElementById('btn-prev');
-      if (btnNext) btnNext.addEventListener('click', () => console.debug('[TodosProdutos] native click detected on btn-next'));
-      if (btnPrev) btnPrev.addEventListener('click', () => console.debug('[TodosProdutos] native click detected on btn-prev'));
+      if (this.$refs.btnNext) this.$refs.btnNext.addEventListener('click', this.handleNext.bind(this));
+      if (this.$refs.btnPrev) this.$refs.btnPrev.addEventListener('click', this.handlePrev.bind(this));
     } catch (e) {
       // ignorar
     }
@@ -528,9 +526,10 @@ export default {
             <div class="mt-12 flex justify-center px-4">
             <div class="flex items-center space-x-2">
               <button
+                ref="btnPrev"
                 id="btn-prev"
                 class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-                @click.prevent="handlePrev"
+                @click="handlePrev"
                 style="pointer-events:auto; z-index:50"
                 aria-label="Anterior"
               >
@@ -540,9 +539,10 @@ export default {
               <span>Página {{ paginaAtual }} de {{ totalPaginas }}</span>
 
               <button
+                ref="btnNext"
                 id="btn-next"
                 class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-                @click.prevent="handleNext"
+                @click="handleNext"
                 style="pointer-events:auto; z-index:50"
                 aria-label="Próxima"
               >
