@@ -36,7 +36,7 @@ router.get("/getProdutosByPage/:pagina", async (req, res) => {
   try {
     const { pagina } = req.params;
     const indiceFinal = Number(pagina) * 20;
-    const indiceInicial =indiceFinal - 20;
+    const indiceInicial =(indiceFinal - 20)+1;
 
     const like = `%${pagina}%`;
     const [produtos] = await pool.query(
@@ -53,7 +53,7 @@ router.get("/", async (req, res) => {
   try {
     //const produtos = await getDB().collection('ProdutosAmazon').find({}).toArray();
     const produtos = await pool.query(`Select * from produtos`);
-    console.log(produtos);
+    
     res.json(produtos);
   } catch (err) {
     res.status(500).json({ error: "Error ao buscar produtos" });
