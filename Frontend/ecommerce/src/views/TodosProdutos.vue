@@ -46,11 +46,43 @@ export default {
   },
 
   async mounted() {
+    // Inicializa a página a partir de uma propriedade global (se existir) ou sessionStorage
+    const globalPage = window.todosProdutosPagina;
+    const saved = sessionStorage.getItem('todosProdutos_paginaAtual');
+    if (typeof globalPage === 'number' && globalPage >= 1) {
+      this.paginaAtual = globalPage;
+    } else if (saved) {
+      const n = parseInt(saved, 10);
+      if (!isNaN(n) && n >= 1) this.paginaAtual = n;
+    }
+
+    // Carrega a página inicial (watcher também reagirá a mudanças posteriores)
     await this.carregarPagina(this.paginaAtual);
     this.getCategoria();
   },
 
   watch: {
+    paginaAtual(novaPagina, antiga) {
+      // Garantir limites
+      if (!novaPagina || novaPagina < 1) {
+        this.paginaAtual = 1;
+        return;
+      }
+      // Salvar como propriedade global e em sessionStorage para persistência
+      try {
+        window.todosProdutosPagina = novaPagina;
+      } catch (e) {
+        // ignore
+      }
+      try {
+        sessionStorage.setItem('todosProdutos_paginaAtual', String(novaPagina));
+      } catch (e) {
+        // ignore
+      }
+      console.debug('[TodosProdutos] watcher paginaAtual ->', novaPagina, 'antiga:', antiga);
+      // Atualiza produtos sempre que a página mudar
+      this.carregarPagina(novaPagina);
+    },
     ordenacao() {
       // Simples: recarrega a página quando a ordenação muda. Você pode adaptar para passar um parâmetro ao endpoint.
       this.carregarPagina(1);
@@ -255,14 +287,11 @@ export default {
       this.$router.push({ path: "/login" });
     },
     prevPage() {
+      // Apenas atualiza o estado global/local da página. O watcher cuida de chamar carregarPagina.
       if (this.paginaAtual > 1) {
         const nova = this.paginaAtual - 1;
         console.debug('[TodosProdutos] prevPage clicked - atual:', this.paginaAtual, 'nova:', nova);
         this.paginaAtual = nova;
-        // monta o endpoint com a nova página e passa explicitamente para carregarPagina
-        const endpoint = this.buildProdutosEndpoint(nova);
-        console.debug('[TodosProdutos] prevPage -> endpoint:', endpoint);
-        this.carregarPagina(nova, endpoint);
       }
     },
     nextPage() {
@@ -271,10 +300,6 @@ export default {
         const nova = this.paginaAtual + 1;
         console.debug('[TodosProdutos] nextPage clicked - atual:', this.paginaAtual, 'nova:', nova, 'max:', max);
         this.paginaAtual = nova;
-        // monta o endpoint com a nova página e passa explicitamente para carregarPagina
-        const endpoint = this.buildProdutosEndpoint(nova);
-        console.debug('[TodosProdutos] nextPage -> endpoint:', endpoint);
-        this.carregarPagina(nova, endpoint);
       }
     },
   },
