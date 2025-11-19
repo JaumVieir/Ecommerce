@@ -296,35 +296,13 @@ export default {
       localStorage.removeItem("auth");
       this.$router.push({ path: "/login" });
     },
-    prevPage() {
-      // Apenas atualiza o estado global/local da página. O watcher cuida de chamar carregarPagina.
-      if (this.paginaAtual > 1) {
-        const nova = this.paginaAtual - 1;
-        console.debug('[TodosProdutos] prevPage clicked - atual:', this.paginaAtual, 'nova:', nova);
-        this.paginaAtual = nova;
-      }
-    },
     async handlePrev(event) {
-      console.debug('[TodosProdutos] handlePrev event:', event && event.type);
-      // decrementar (não menor que 1) e forçar carregar
-      const nova = Math.max(1, this.paginaAtual - 1);
-      if (nova === this.paginaAtual) {
-        console.debug('[TodosProdutos] handlePrev -> já na página 1');
-        return;
-      }
+      const nova = this.paginaAtual + 1;
+      console.debug('[TodosProdutos] testIncrement clicked - atual:', this.paginaAtual, 'nova:', nova);
       this.paginaAtual = nova;
-      console.debug('[TodosProdutos] handlePrev -> nova:', nova);
       const endpoint = this.buildProdutosEndpoint(nova);
-      console.debug('[TodosProdutos] handlePrev -> endpoint:', endpoint);
+      console.debug('[TodosProdutos] testIncrement -> endpoint:', endpoint);
       await this.carregarPagina(nova, endpoint);
-    },
-    nextPage() {
-      const max = this.totalPaginas;
-      if (this.paginaAtual < max) {
-        const nova = this.paginaAtual + 1;
-        console.debug('[TodosProdutos] nextPage clicked - atual:', this.paginaAtual, 'nova:', nova, 'max:', max);
-        this.paginaAtual = nova;
-      }
     },
     async handleNext() {
       // Método de diagnóstico: incrementa a página e força carregar (sempre tenta; servidor decide)
@@ -544,16 +522,6 @@ export default {
                 aria-label="Próxima"
               >
                 Próxima
-              </button>
-            </div>
-            <!-- botão de teste para incrementar (temporário) -->
-            <div class="ml-4">
-              <button
-                class="px-3 py-1 bg-blue-500 text-white rounded"
-                @click.prevent="testIncrement"
-                title="Botão de teste: incrementa a página e força carregar"
-              >
-                Test +1
               </button>
             </div>
           </div>
