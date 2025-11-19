@@ -56,6 +56,8 @@ export default {
       if (!isNaN(n) && n >= 1) this.paginaAtual = n;
     }
 
+    // Debug: confirmar montagem do componente
+    console.debug('[TodosProdutos] mounted, paginaAtual (inicial):', this.paginaAtual);
     // Carrega a página inicial (watcher também reagirá a mudanças posteriores)
     await this.carregarPagina(this.paginaAtual);
     this.getCategoria();
@@ -302,6 +304,16 @@ export default {
         this.paginaAtual = nova;
       }
     },
+    testIncrement() {
+      // Método de diagnóstico: incrementa independentemente do max e força carregar
+      const nova = this.paginaAtual + 1;
+      console.debug('[TodosProdutos] testIncrement clicked - atual:', this.paginaAtual, 'nova:', nova);
+      this.paginaAtual = nova;
+      // Chama diretamente para garantir que uma requisição aconteça mesmo se watcher falhar
+      const endpoint = this.buildProdutosEndpoint(nova);
+      console.debug('[TodosProdutos] testIncrement -> endpoint:', endpoint);
+      this.carregarPagina(nova, endpoint);
+    },
   },
 };
 </script>
@@ -503,6 +515,16 @@ export default {
                 @click="nextPage"
               >
                 Próxima
+              </button>
+            </div>
+            <!-- Botão de teste visível sempre (temporário) -->
+            <div class="ml-4">
+              <button
+                class="px-3 py-1 bg-blue-500 text-white rounded"
+                @click.prevent="testIncrement"
+                title="Botão de teste: incrementa a página e força carregar"
+              >
+                Test +1
               </button>
             </div>
           </div>
