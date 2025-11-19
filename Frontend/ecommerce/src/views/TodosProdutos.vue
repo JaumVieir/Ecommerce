@@ -207,6 +207,8 @@ export default {
         const endpoint = endpointArg || this.buildProdutosEndpoint(pagina);
         console.debug('[TodosProdutos] carregarPagina -> pagina:', pagina, 'endpoint:', endpoint);
         const response = await api.get(endpoint);
+        console.debug('[TodosProdutos] carregarPagina -> response status:', response && response.status);
+        console.debug('[TodosProdutos] carregarPagina -> response.data (preview):', response && response.data && (Array.isArray(response.data) ? `array(${response.data.length})` : typeof response.data));
 
         // Aceitar múltiplos formatos de resposta para facilitar a integração:
         // 1) { products: [...], total: 123 }
@@ -228,10 +230,17 @@ export default {
             this.totalProdutosServidor = this.totalProdutosServidor || this.produtos.length;
           } else {
             // caso inesperado: tentar usar data[0]
-            this.produtos = response.data[0] || [];
+            // Se o backend devolveu um objeto com chave diferente, tentar extrair o primeiro array encontrado
+            const maybeArray = Object.keys(response.data).map(k => response.data[k]).find(v => Array.isArray(v));
+            this.produtos = maybeArray || response.data[0] || [];
+            // tentar extrair total se existir em outras chaves
+            if (!this.totalProdutosServidor) {
+              const maybeTotal = Object.keys(response.data).map(k => response.data[k]).find(v => typeof v === 'number');
+              if (maybeTotal) this.totalProdutosServidor = maybeTotal;
+            }
           }
         }
-
+        console.debug('[TodosProdutos] carregarPagina -> produtos carregados:', Array.isArray(this.produtos) ? this.produtos.length : 0, 'ex:', this.produtos && this.produtos[0]);
         this.mostrandoProdutos = true;
       } catch (error) {
         console.error('Erro ao carregar produtos paginados:', error);
@@ -431,7 +440,7 @@ export default {
             <!-- Primeiro produto -->
             <div
               v-for="produto in produtosPaginação"
-              :key="produto.id"
+              :key="produto.product_id || produto.id"
               class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 group"
             >
               <div
