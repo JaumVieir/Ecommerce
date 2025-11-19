@@ -161,6 +161,7 @@ export default {
       this.mostrandoProdutos = false;
       try {
         const endpoint = this.buildProdutosEndpoint(pagina);
+        console.debug('[TodosProdutos] carregarPagina -> pagina:', pagina, 'endpoint:', endpoint);
         const response = await api.get(endpoint);
 
         // Aceitar múltiplos formatos de resposta para facilitar a integração:
@@ -259,6 +260,7 @@ export default {
     prevPage() {
       if (this.paginaAtual > 1) {
         const nova = this.paginaAtual - 1;
+        console.debug('[TodosProdutos] prevPage clicked - atual:', this.paginaAtual, 'nova:', nova);
         this.paginaAtual = nova;
         // chama explicitamente para garantir que o endpoint receba a página correta
         this.carregarPagina(nova);
@@ -268,6 +270,7 @@ export default {
       const max = this.totalPaginas;
       if (this.paginaAtual < max) {
         const nova = this.paginaAtual + 1;
+        console.debug('[TodosProdutos] nextPage clicked - atual:', this.paginaAtual, 'nova:', nova, 'max:', max);
         this.paginaAtual = nova;
         // chama explicitamente para garantir que o endpoint receba a página correta
         this.carregarPagina(nova);
