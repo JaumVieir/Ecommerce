@@ -337,6 +337,19 @@ export default {
         this.carregarPagina(nova, endpoint);
       }
     },
+    testDecrement() {
+      // Método de diagnóstico: decrementa a página (sem ir abaixo de 1) e força carregar
+      const nova = Math.max(1, this.paginaAtual - 1);
+      console.debug('[TodosProdutos] testDecrement clicked - atual:', this.paginaAtual, 'nova:', nova);
+      if (nova !== this.paginaAtual) {
+        this.paginaAtual = nova;
+        const endpoint = this.buildProdutosEndpoint(nova);
+        console.debug('[TodosProdutos] testDecrement -> endpoint:', endpoint);
+        this.carregarPagina(nova, endpoint);
+      } else {
+        console.debug('[TodosProdutos] testDecrement -> já na página 1');
+      }
+    },
     // testIncrement removido — lógica incorporada aos handlers prev/next
   },
 };
@@ -549,7 +562,16 @@ export default {
                 Próxima
               </button>
             </div>
-            <!-- teste removido -->
+            <!-- botão de teste para decrementar (temporário) -->
+            <div class="ml-4">
+              <button
+                class="px-3 py-1 bg-blue-500 text-white rounded"
+                @click.prevent="testDecrement"
+                title="Botão de teste: decrementa a página e força carregar"
+              >
+                Test -1
+              </button>
+            </div>
           </div>
         </div>
       </div>
