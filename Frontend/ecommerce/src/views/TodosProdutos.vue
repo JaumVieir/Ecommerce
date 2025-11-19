@@ -24,6 +24,7 @@ export default {
       // Flags internas
       isRestoringState: false,
       carregandoInicial: true,
+      mostrandoProdutos: false, // Flag para controlar exibição gradual
     };
   },
 
@@ -79,6 +80,7 @@ export default {
           this.totalProdutosServidor = parseInt(totalStr);
           this.paginasCarregadas = Math.ceil(this.produtosCache.length / this.produtosPorPagina);
           this.carregandoInicial = false;
+          this.mostrandoProdutos = true;
         } catch (e) {
           console.error('Erro ao restaurar cache:', e);
         }
@@ -103,6 +105,8 @@ export default {
     if (!this.produtosCache.length) {
       await this.carregarProdutosPaginados(this.paginaAtual);
       this.carregandoInicial = false;
+    } else {
+      this.mostrandoProdutos = true;
     }
 
     // Remover flags usadas (exceto cache) para não restaurar indevidamente em futuras visitas
@@ -295,11 +299,11 @@ export default {
       try {
         this.carregandoProdutos = true;
         
-        // Carregar 10 páginas inicialmente, depois 5 páginas por vez
+        // Carregar 5 páginas inicialmente, depois 3 páginas por vez (mais rápido e eficiente)
         const offset = (paginaInicial - 1) * this.produtosPorPagina;
         const isCarregamentoInicial = this.paginasCarregadas === 0;
-        const paginasParaCarregar = isCarregamentoInicial ? 10 : 5;
-        const limit = this.produtosPorPagina * paginasParaCarregar; // 10 páginas = 200 produtos inicial, 5 páginas = 100 produtos depois
+        const paginasParaCarregar = isCarregamentoInicial ? 5 : 3;
+        const limit = this.produtosPorPagina * paginasParaCarregar; // 5 páginas = 100 produtos inicial, 3 páginas = 60 produtos depois
         
         const response = await api.get(`/produtos?limit=${limit}&offset=${offset}`);
         
@@ -323,12 +327,17 @@ export default {
             await this.getProdutosSemPaginacao();
           }
           
-          // Salvar cache no sessionStorage para carregamento rápido
-          try {
-            sessionStorage.setItem('todosProdutos_cache', JSON.stringify(this.produtosCache));
-            sessionStorage.setItem('todosProdutos_total', this.totalProdutosServidor.toString());
-          } catch (e) {
-            console.log('Não foi possível salvar cache:', e);
+          // Mostrar produtos assim que carregar
+          this.mostrandoProdutos = true;
+          
+          // Salvar cache APENAS se for pequeno o suficiente (até 3 páginas = 60 produtos)
+          if (this.produtosCache.length <= 60) {
+            try {
+              sessionStorage.setItem('todosProdutos_cache', JSON.stringify(this.produtosCache));
+              sessionStorage.setItem('todosProdutos_total', this.totalProdutosServidor.toString());
+            } catch (e) {
+              console.log('Cache muito grande, não salvando no sessionStorage');
+            }
           }
         }
       } catch (error) {
@@ -356,8 +365,8 @@ export default {
       // Se estamos na última página carregada ou próximo dela, carregar mais
       const paginasRestantes = this.paginasCarregadas - paginaAtual;
       
-      // Carregar mais quando estiver a 2 páginas do final do cache (antecipa o carregamento)
-      if (paginasRestantes <= 2 && this.produtosCache.length < this.totalProdutosServidor) {
+      // Carregar mais quando estiver a 1 página do final do cache
+      if (paginasRestantes <= 1 && this.produtosCache.length < this.totalProdutosServidor) {
         this.carregarProdutosPaginados(this.paginasCarregadas + 1);
       }
     },
@@ -513,7 +522,13 @@ export default {
               </select>
             </div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4">
+          
+          <!-- Loading Spinner -->
+          <div v-if="!mostrandoProdutos" class="flex justify-center items-center py-20">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-primary-600"></div>
+          </div>
+          
+          <div v-else class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4">
             <!-- Primeiro produto -->
             <div
               v-for="produto in produtosPaginação"
