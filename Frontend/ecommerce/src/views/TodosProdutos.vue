@@ -418,7 +418,7 @@ export default {
             <div class="hidden md:flex items-center space-x-8"></div>
             <div class="flex items-center space-x-4">
               <div class="relative">
-                <input v-model="pesquisar" type="text" placeholder="Search products..."
+                <input v-model="pesquisar" type="text" placeholder="Buscar Produtos..."
                   class="py-2 pl-10 pr-4 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
                 <span class="material-symbols-outlined absolute left-3 top-2 text-gray-400">search</span>
               </div>
