@@ -15,6 +15,8 @@ export default {
       ordenacao: "",
       categorias: [],
       categoriaSelecionada: "",
+  // timer para debounce da busca
+  searchTimer: null,
       // Toast simples para feedback de adição ao carrinho
       toastVisible: false,
       toastMessage: "",
@@ -180,12 +182,21 @@ export default {
     },
 
     // Monta o endpoint para buscar produtos paginados.
-    // TODO: Substitua o retorno desta função pelo seu endpoint real.
-    // Exemplo sugerido: return `/produtos?page=${pagina}&limit=${this.produtosPorPagina}`;
-    buildProdutosEndpoint(pagina) {
-      // ATENÇÃO: troca aqui para o endpoint que sua API usa para paginação
-      return `https://ecommerce-nuqc.onrender.com/produtos/getProdutosByPage/${pagina}`;
-      
+    // Recebe página e um objeto opcional com parâmetros: { search, categoria, ordenacao }
+    // TODO: ajuste a construção conforme sua API. Exemplo de formato aceito aqui:
+    //   GET /produtos/getProdutosByPage/:page?limit=20&q=term&categoria=cat&ordenacao=1
+    buildProdutosEndpoint(pagina, opts = {}) {
+      const page = pagina || 1;
+      // Base (substitua se seu endpoint for diferente)
+      const base = `https://ecommerce-nuqc.onrender.com/produtos/getProdutosByPage/${page}`;
+      const params = new URLSearchParams();
+      // limitar por página
+      params.set('limit', String(this.produtosPorPagina));
+      if (opts.search) params.set('q', String(opts.search));
+      if (opts.categoria) params.set('categoria', String(opts.categoria));
+      if (opts.ordenacao) params.set('ordenacao', String(opts.ordenacao));
+      const qs = params.toString();
+      return qs ? `${base}?${qs}` : base;
     },
 
     async carregarPagina(pagina, endpointArg) {
@@ -231,20 +242,28 @@ export default {
     },
 
     async buscarProdutos(texto) {
-      try {
-        // TODO: ajuste este endpoint de busca conforme sua API
-        const endpoint = `/produtos/search/${encodeURIComponent(texto)}`;
-        const response = await api.get(endpoint);
-        if (response.data) {
-          // considerar que a busca retorna um array de produtos
-          this.produtos = Array.isArray(response.data) ? response.data : (response.data.products || []);
-          this.totalProdutosServidor = this.produtos.length;
-          this.paginaAtual = 1;
-        }
-      } catch (error) {
-        console.error(error);
-        alert("Erro ao carregar produtos. Tente novamente.");
-      }
+      // Debounce simples: aguarda 300ms desde o último keystroke
+      if (this.searchTimer) clearTimeout(this.searchTimer);
+      return new Promise((resolve) => {
+        this.searchTimer = setTimeout(async () => {
+          try {
+            const pagina = 1;
+            this.paginaAtual = pagina;
+            const endpoint = this.buildProdutosEndpoint(pagina, {
+              search: texto,
+              categoria: this.categoriaSelecionada,
+              ordenacao: this.ordenacao,
+            });
+            console.debug('[TodosProdutos] buscarProdutos -> endpoint:', endpoint);
+            await this.carregarPagina(pagina, endpoint);
+            resolve();
+          } catch (error) {
+            console.error('Erro na busca paginada:', error);
+            // não bloquear a UI
+            resolve();
+          }
+        }, 300);
+      });
     },
 
     async getCategoria() {
@@ -291,16 +310,24 @@ export default {
       this.$router.push({ path: "/login" });
     },
     async handlePrev() {
-      const nova = this.paginaAtual - 1;
+      const nova = Math.max(1, this.paginaAtual - 1);
+      if (nova === this.paginaAtual) return;
       this.paginaAtual = nova;
-      const endpoint = this.buildProdutosEndpoint(nova);
-      await this.carregarPagina(nova, endpoint);;
+      const endpoint = this.buildProdutosEndpoint(nova, {
+        search: this.pesquisar,
+        categoria: this.categoriaSelecionada,
+        ordenacao: this.ordenacao,
+      });
+      await this.carregarPagina(nova, endpoint);
     },
     async handleNext() {
-      // Método de diagnóstico: incrementa a página e força carregar (sempre tenta; servidor decide)
       const nova = this.paginaAtual + 1;
       this.paginaAtual = nova;
-      const endpoint = this.buildProdutosEndpoint(nova);
+      const endpoint = this.buildProdutosEndpoint(nova, {
+        search: this.pesquisar,
+        categoria: this.categoriaSelecionada,
+        ordenacao: this.ordenacao,
+      });
       await this.carregarPagina(nova, endpoint);
     },
   },
