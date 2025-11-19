@@ -62,13 +62,7 @@ export default {
     await this.carregarPagina(this.paginaAtual);
     this.getCategoria();
     
-    // Registra listeners nativos nas refs dos botões como fallback confiável
-    try {
-      if (this.$refs.btnNext) this.$refs.btnNext.addEventListener('click', this.handleNext.bind(this));
-      if (this.$refs.btnPrev) this.$refs.btnPrev.addEventListener('click', this.handlePrev.bind(this));
-    } catch (e) {
-      // ignorar
-    }
+
   },
 
   watch: {
