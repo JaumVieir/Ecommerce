@@ -152,12 +152,12 @@ export default {
       
     },
 
-    async carregarPagina(pagina) {
+    async carregarPagina(pagina, endpointArg) {
       if (this.carregandoProdutos) return;
       this.carregandoProdutos = true;
       this.mostrandoProdutos = false;
       try {
-        const endpoint = this.buildProdutosEndpoint(pagina);
+        const endpoint = endpointArg || this.buildProdutosEndpoint(pagina);
         console.debug('[TodosProdutos] carregarPagina -> pagina:', pagina, 'endpoint:', endpoint);
         const response = await api.get(endpoint);
 
@@ -259,8 +259,10 @@ export default {
         const nova = this.paginaAtual - 1;
         console.debug('[TodosProdutos] prevPage clicked - atual:', this.paginaAtual, 'nova:', nova);
         this.paginaAtual = nova;
-        // chama explicitamente para garantir que o endpoint receba a página correta
-        this.carregarPagina(nova);
+        // monta o endpoint com a nova página e passa explicitamente para carregarPagina
+        const endpoint = this.buildProdutosEndpoint(nova);
+        console.debug('[TodosProdutos] prevPage -> endpoint:', endpoint);
+        this.carregarPagina(nova, endpoint);
       }
     },
     nextPage() {
@@ -269,8 +271,10 @@ export default {
         const nova = this.paginaAtual + 1;
         console.debug('[TodosProdutos] nextPage clicked - atual:', this.paginaAtual, 'nova:', nova, 'max:', max);
         this.paginaAtual = nova;
-        // chama explicitamente para garantir que o endpoint receba a página correta
-        this.carregarPagina(nova);
+        // monta o endpoint com a nova página e passa explicitamente para carregarPagina
+        const endpoint = this.buildProdutosEndpoint(nova);
+        console.debug('[TodosProdutos] nextPage -> endpoint:', endpoint);
+        this.carregarPagina(nova, endpoint);
       }
     },
   },
