@@ -337,17 +337,18 @@ export default {
         this.carregarPagina(nova, endpoint);
       }
     },
-    testDecrement() {
-      // Método de diagnóstico: decrementa a página (sem ir abaixo de 1) e força carregar
-      const nova = Math.max(1, this.paginaAtual - 1);
-      console.debug('[TodosProdutos] testDecrement clicked - atual:', this.paginaAtual, 'nova:', nova);
-      if (nova !== this.paginaAtual) {
+    testIncrement() {
+      // Método de diagnóstico: incrementa a página e força carregar
+      const max = this.totalPaginas;
+      const nova = this.paginaAtual + 1;
+      if (nova <= Math.max(1, max)) {
+        console.debug('[TodosProdutos] testIncrement clicked - atual:', this.paginaAtual, 'nova:', nova);
         this.paginaAtual = nova;
         const endpoint = this.buildProdutosEndpoint(nova);
-        console.debug('[TodosProdutos] testDecrement -> endpoint:', endpoint);
+        console.debug('[TodosProdutos] testIncrement -> endpoint:', endpoint);
         this.carregarPagina(nova, endpoint);
       } else {
-        console.debug('[TodosProdutos] testDecrement -> já na página 1');
+        console.debug('[TodosProdutos] testIncrement -> já na última página');
       }
     },
     // testIncrement removido — lógica incorporada aos handlers prev/next
@@ -562,14 +563,14 @@ export default {
                 Próxima
               </button>
             </div>
-            <!-- botão de teste para decrementar (temporário) -->
+            <!-- botão de teste para incrementar (temporário) -->
             <div class="ml-4">
               <button
                 class="px-3 py-1 bg-blue-500 text-white rounded"
-                @click.prevent="testDecrement"
-                title="Botão de teste: decrementa a página e força carregar"
+                @click.prevent="testIncrement"
+                title="Botão de teste: incrementa a página e força carregar"
               >
-                Test -1
+                Test +1
               </button>
             </div>
           </div>
