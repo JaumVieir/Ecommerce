@@ -79,7 +79,7 @@ export default {
                   console.log(recente);
                   axios
                     .get(
-                      `https://ecommerce-node-6llb.onrender.com/recs?prod_id=${recente}&topk=8`
+                      `https://ecommerce-nuqc.onrender.com/recs?prod_id=${recente}&topk=8`
                     )
                     .then((res) => {
                       this.produtosComprados =
@@ -116,7 +116,7 @@ export default {
                   console.log("recente", recente);
                   axios
                     .get(
-                      `https://ecommerce-node-6llb.onrender.com/recs?prod_id=${recente}&topk=8`
+                      `https://ecommerce-nuqc.onrender.com/recs?prod_id=${recente}&topk=8`
                     )
                     .then((res) => {
                       this.produtosRecentes =
