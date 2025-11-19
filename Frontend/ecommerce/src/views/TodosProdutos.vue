@@ -92,8 +92,8 @@ export default {
         // ignore
       }
       console.debug('[TodosProdutos] watcher paginaAtual ->', novaPagina, 'antiga:', antiga);
-      // Atualiza produtos sempre que a página mudar
-      this.carregarPagina(novaPagina);
+      // OBS: não chamar carregarPagina aqui para evitar chamadas duplicadas quando handlers
+      // do botão já chamam carregarPagina diretamente.
     },
     ordenacao() {
       // Simples: recarrega a página quando a ordenação muda. Você pode adaptar para passar um parâmetro ao endpoint.
@@ -308,7 +308,15 @@ export default {
     },
     handlePrev(event) {
       console.debug('[TodosProdutos] handlePrev event:', event && event.type);
-      this.prevPage();
+      // implementar a lógica do teste: decrementar e forçar carregar
+      if (this.paginaAtual > 1) {
+        const nova = this.paginaAtual - 1;
+        console.debug('[TodosProdutos] handlePrev -> nova:', nova);
+        this.paginaAtual = nova;
+        const endpoint = this.buildProdutosEndpoint(nova);
+        console.debug('[TodosProdutos] handlePrev -> endpoint:', endpoint);
+        this.carregarPagina(nova, endpoint);
+      }
     },
     nextPage() {
       const max = this.totalPaginas;
@@ -320,18 +328,18 @@ export default {
     },
     handleNext(event) {
       console.debug('[TodosProdutos] handleNext event:', event && event.type);
-      this.nextPage();
-    },
-    testIncrement() {
-      // Método de diagnóstico: incrementa independentemente do max e força carregar
+      // implementar a lógica do teste: incrementar e forçar carregar
+      const max = this.totalPaginas;
       const nova = this.paginaAtual + 1;
-      console.debug('[TodosProdutos] testIncrement clicked - atual:', this.paginaAtual, 'nova:', nova);
-      this.paginaAtual = nova;
-      // Chama diretamente para garantir que uma requisição aconteça mesmo se watcher falhar
-      const endpoint = this.buildProdutosEndpoint(nova);
-      console.debug('[TodosProdutos] testIncrement -> endpoint:', endpoint);
-      this.carregarPagina(nova, endpoint);
+      if (nova <= Math.max(1, max)) {
+        console.debug('[TodosProdutos] handleNext -> nova:', nova);
+        this.paginaAtual = nova;
+        const endpoint = this.buildProdutosEndpoint(nova);
+        console.debug('[TodosProdutos] handleNext -> endpoint:', endpoint);
+        this.carregarPagina(nova, endpoint);
+      }
     },
+    // testIncrement removido — lógica incorporada aos handlers prev/next
   },
 };
 </script>
@@ -541,16 +549,7 @@ export default {
                 Próxima
               </button>
             </div>
-            <!-- Botão de teste visível sempre (temporário) -->
-            <div class="ml-4">
-              <button
-                class="px-3 py-1 bg-blue-500 text-white rounded"
-                @click.prevent="testIncrement"
-                title="Botão de teste: incrementa a página e força carregar"
-              >
-                Test +1
-              </button>
-            </div>
+            <!-- teste removido -->
           </div>
         </div>
       </div>
