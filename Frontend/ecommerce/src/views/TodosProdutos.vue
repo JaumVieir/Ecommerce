@@ -295,9 +295,11 @@ export default {
       try {
         this.carregandoProdutos = true;
         
-        // Carregar 2 páginas de uma vez
+        // Carregar 10 páginas inicialmente, depois 5 páginas por vez
         const offset = (paginaInicial - 1) * this.produtosPorPagina;
-        const limit = this.produtosPorPagina * 2; // 2 páginas = 40 produtos
+        const isCarregamentoInicial = this.paginasCarregadas === 0;
+        const paginasParaCarregar = isCarregamentoInicial ? 10 : 5;
+        const limit = this.produtosPorPagina * paginasParaCarregar; // 10 páginas = 200 produtos inicial, 5 páginas = 100 produtos depois
         
         const response = await api.get(`/produtos?limit=${limit}&offset=${offset}`);
         
@@ -354,8 +356,8 @@ export default {
       // Se estamos na última página carregada ou próximo dela, carregar mais
       const paginasRestantes = this.paginasCarregadas - paginaAtual;
       
-      // Carregar mais quando estiver a 1 página do final do cache
-      if (paginasRestantes <= 1 && this.produtosCache.length < this.totalProdutosServidor) {
+      // Carregar mais quando estiver a 2 páginas do final do cache (antecipa o carregamento)
+      if (paginasRestantes <= 2 && this.produtosCache.length < this.totalProdutosServidor) {
         this.carregarProdutosPaginados(this.paginasCarregadas + 1);
       }
     },
