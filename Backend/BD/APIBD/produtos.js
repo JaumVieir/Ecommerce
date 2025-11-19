@@ -33,11 +33,11 @@ router.get("/getByTexto/:texto", async (req, res) => {
 });
 router.get("/getProdutosByPage/:pagina", async (req, res) => {
   try {
-    // página atual (mínimo 1)
+    // página atual
     let pagina = parseInt(req.params.pagina, 10) || 1;
     if (pagina < 1) pagina = 1;
 
-    // limite por página (vem da query string, default 20)
+    // limite por página
     const limit = parseInt(req.query.limit, 10) || 20;
     const offset = (pagina - 1) * limit;
 
@@ -45,12 +45,12 @@ router.get("/getProdutosByPage/:pagina", async (req, res) => {
     const { q, categoria, ordenacao } = req.query;
 
     // -----------------------------
-    // 1) Monta SQL base com filtros
+    // 1) SQL base + filtros
     // -----------------------------
     let sql = `SELECT * FROM produtos WHERE 1=1`;
     const params = [];
 
-    // filtro de busca (nome / descrição)
+    // busca por texto (nome / descrição)
     if (q) {
       const like = `%${q}%`;
       sql += ` AND (product_name LIKE ? OR descricao LIKE ?)`;
@@ -65,16 +65,15 @@ router.get("/getProdutosByPage/:pagina", async (req, res) => {
 
     // ordenação
     if (ordenacao === "1") {
-      // mais barato
+      // Mais barato
       sql += ` ORDER BY actual_price ASC`;
     } else if (ordenacao === "2") {
-      // mais caro
+      // Mais caro
       sql += ` ORDER BY actual_price DESC`;
     } else if (ordenacao === "3") {
-      // mais popular (ajuste a coluna se for outra)
+      // Mais popular (ajuste a coluna se for outra)
       sql += ` ORDER BY rating DESC`;
     } else {
-      // padrão
       sql += ` ORDER BY id ASC`;
     }
 
@@ -82,14 +81,10 @@ router.get("/getProdutosByPage/:pagina", async (req, res) => {
     sql += ` LIMIT ? OFFSET ?`;
     params.push(limit, offset);
 
-    // -----------------------------
-    // 2) Busca página de produtos
-    // -----------------------------
+    // 2) busca da página atual
     const [produtos] = await pool.query(sql, params);
 
-    // -----------------------------
-    // 3) Busca TOTAL de registros com os mesmos filtros
-    // -----------------------------
+    // 3) total com os MESMOS filtros
     let countSql = `SELECT COUNT(*) AS total FROM produtos WHERE 1=1`;
     const countParams = [];
 
@@ -107,9 +102,6 @@ router.get("/getProdutosByPage/:pagina", async (req, res) => {
     const [rowsCount] = await pool.query(countSql, countParams);
     const total = rowsCount[0]?.total || 0;
 
-    // -----------------------------
-    // 4) Resposta pro frontend
-    // -----------------------------
     res.json({
       products: produtos,
       total,
@@ -121,6 +113,7 @@ router.get("/getProdutosByPage/:pagina", async (req, res) => {
     res.status(500).json({ error: "Erro ao buscar produtos" });
   }
 });
+
 
 
 router.get("/", async (req, res) => {
