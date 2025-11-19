@@ -256,6 +256,23 @@ export default {
       localStorage.removeItem("auth");
       this.$router.push({ path: "/login" });
     },
+    prevPage() {
+      if (this.paginaAtual > 1) {
+        const nova = this.paginaAtual - 1;
+        this.paginaAtual = nova;
+        // chama explicitamente para garantir que o endpoint receba a página correta
+        this.carregarPagina(nova);
+      }
+    },
+    nextPage() {
+      const max = this.totalPaginas;
+      if (this.paginaAtual < max) {
+        const nova = this.paginaAtual + 1;
+        this.paginaAtual = nova;
+        // chama explicitamente para garantir que o endpoint receba a página correta
+        this.carregarPagina(nova);
+      }
+    },
   },
 };
 </script>
@@ -446,7 +463,7 @@ export default {
               <button
                 class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
                 :disabled="paginaAtual === 1"
-                @click="paginaAtual--"
+                @click="prevPage"
               >
                 Anterior
               </button>
@@ -456,7 +473,7 @@ export default {
               <button
                 class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
                 :disabled="paginaAtual === totalPaginas"
-                @click="paginaAtual++"
+                @click="nextPage"
               >
                 Próxima
               </button>
