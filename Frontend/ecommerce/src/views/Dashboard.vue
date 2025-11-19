@@ -385,7 +385,7 @@ export default {
       <div class="pt-4 pb-12 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="flex justify-between items-center mb-8">
-            <h2 class="text-3xl font-bold">Baseado em Acessos Recentes</h2>
+            <h2 class="text-3xl font-bold">Com Base em seus Interesses Recentes</h2>
             <div class="flex space-x-2"></div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
