@@ -61,6 +61,16 @@ export default {
     // Carrega a página inicial (watcher também reagirá a mudanças posteriores)
     await this.carregarPagina(this.paginaAtual);
     this.getCategoria();
+    
+    // Adiciona listeners nativos como fallback para diagnóstico
+    try {
+      const btnNext = document.getElementById('btn-next');
+      const btnPrev = document.getElementById('btn-prev');
+      if (btnNext) btnNext.addEventListener('click', () => console.debug('[TodosProdutos] native click detected on btn-next'));
+      if (btnPrev) btnPrev.addEventListener('click', () => console.debug('[TodosProdutos] native click detected on btn-prev'));
+    } catch (e) {
+      // ignorar
+    }
   },
 
   watch: {
@@ -296,6 +306,10 @@ export default {
         this.paginaAtual = nova;
       }
     },
+    handlePrev(event) {
+      console.debug('[TodosProdutos] handlePrev event:', event && event.type);
+      this.prevPage();
+    },
     nextPage() {
       const max = this.totalPaginas;
       if (this.paginaAtual < max) {
@@ -303,6 +317,10 @@ export default {
         console.debug('[TodosProdutos] nextPage clicked - atual:', this.paginaAtual, 'nova:', nova, 'max:', max);
         this.paginaAtual = nova;
       }
+    },
+    handleNext(event) {
+      console.debug('[TodosProdutos] handleNext event:', event && event.type);
+      this.nextPage();
     },
     testIncrement() {
       // Método de diagnóstico: incrementa independentemente do max e força carregar
@@ -499,11 +517,14 @@ export default {
               </div>
             </div>
           </div>
-          <div class="mt-12 flex justify-center px-4">
+            <div class="mt-12 flex justify-center px-4">
             <div class="flex items-center space-x-2">
               <button
+                id="btn-prev"
                 class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-                @click="prevPage"
+                @click.prevent="handlePrev"
+                style="pointer-events:auto; z-index:50"
+                aria-label="Anterior"
               >
                 Anterior
               </button>
@@ -511,8 +532,11 @@ export default {
               <span>Página {{ paginaAtual }} de {{ totalPaginas }}</span>
 
               <button
+                id="btn-next"
                 class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-                @click="nextPage"
+                @click.prevent="handleNext"
+                style="pointer-events:auto; z-index:50"
+                aria-label="Próxima"
               >
                 Próxima
               </button>
