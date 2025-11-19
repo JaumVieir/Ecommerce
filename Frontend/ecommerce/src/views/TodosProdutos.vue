@@ -296,6 +296,14 @@ export default {
       localStorage.removeItem("auth");
       this.$router.push({ path: "/login" });
     },
+    prevPage() {
+      // Apenas atualiza o estado global/local da página. O watcher cuida de chamar carregarPagina.
+      if (this.paginaAtual > 1) {
+        const nova = this.paginaAtual - 1;
+        console.debug('[TodosProdutos] prevPage clicked - atual:', this.paginaAtual, 'nova:', nova);
+        this.paginaAtual = nova;
+      }
+    },
     async handlePrev(event) {
       const nova = this.paginaAtual + 1;
       console.debug('[TodosProdutos] testIncrement clicked - atual:', this.paginaAtual, 'nova:', nova);
@@ -303,6 +311,14 @@ export default {
       const endpoint = this.buildProdutosEndpoint(nova);
       console.debug('[TodosProdutos] testIncrement -> endpoint:', endpoint);
       await this.carregarPagina(nova, endpoint);
+    },
+    nextPage() {
+      const max = this.totalPaginas;
+      if (this.paginaAtual < max) {
+        const nova = this.paginaAtual + 1;
+        console.debug('[TodosProdutos] nextPage clicked - atual:', this.paginaAtual, 'nova:', nova, 'max:', max);
+        this.paginaAtual = nova;
+      }
     },
     async handleNext() {
       // Método de diagnóstico: incrementa a página e força carregar (sempre tenta; servidor decide)
