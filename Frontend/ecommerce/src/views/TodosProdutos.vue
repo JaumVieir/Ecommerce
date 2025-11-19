@@ -45,23 +45,26 @@ export default {
 },
 
   async mounted() {
-    await this.carregarPagina(1);
+    
    
-    // Inicializa a página a partir de uma propriedade global (se existir) ou sessionStorage
-    const globalPage = window.todosProdutosPagina;
-    const saved = sessionStorage.getItem('todosProdutos_paginaAtual');
-    if (typeof globalPage === 'number' && globalPage >= 1) {
-      this.paginaAtual = globalPage;
-    } else if (saved) {
-      const n = parseInt(saved, 10);
-      if (!isNaN(n) && n >= 1) this.paginaAtual = n;
-    }
+  this.paginaAtual = 1;
+  this.pesquisar = "";
+  this.categoriaSelecionada = "";
+  this.ordenacao = "";
 
-    // Debug: confirmar montagem do componente
-    console.debug('[TodosProdutos] mounted, paginaAtual (inicial):', this.paginaAtual);
-    // Carrega a página inicial (watcher também reagirá a mudanças posteriores)
-    await this.carregarPagina(this.paginaAtual);
-    this.getCategoria();
+  // (opcional) limpar qualquer coisa antiga salva
+  try {
+    window.todosProdutosPagina = 1;
+    sessionStorage.removeItem('todosProdutos_paginaAtual');
+  } catch (e) {
+    // ignora erro
+  }
+
+  console.debug('[TodosProdutos] mounted, paginaAtual (inicial):', this.paginaAtual);
+
+  // Carrega SEMPRE a página 1 do servidor
+  await this.carregarPagina(1);
+  this.getCategoria();
 
 
   },
